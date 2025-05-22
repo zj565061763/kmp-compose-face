@@ -85,8 +85,8 @@ private fun faceInvalidTips(invalidType: FaceViewModel.InvalidType?): String {
   return when (invalidType) {
     FaceViewModel.InvalidType.NoFace -> "未检测到人脸"
     FaceViewModel.InvalidType.MultiFace -> "检测到多张人脸"
-    FaceViewModel.InvalidType.LowFaceQuality -> "请保持脸部五官清晰可见"
-    FaceViewModel.InvalidType.FaceInteraction -> "请保持脸部正对屏幕，五官自然"
+    FaceViewModel.InvalidType.LowFaceQuality -> "请保持正脸，五官清晰可见"
+    FaceViewModel.InvalidType.FaceInteraction -> "请保持正脸，五官自然"
     null -> ""
   }
 }
@@ -102,6 +102,6 @@ private fun faceInteractingTips(
       FaceInteractionType.MouthOpen -> "请缓慢张嘴"
       FaceInteractionType.RaiseHead -> "请缓慢抬头"
     }
-    FaceInteractionStage.Stop -> ""
+    FaceInteractionStage.Stop -> "请保持正脸"
   }
 }
