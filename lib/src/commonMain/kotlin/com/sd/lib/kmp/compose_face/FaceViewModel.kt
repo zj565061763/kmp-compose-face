@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 class FaceViewModel(
   private val coroutineScope: CoroutineScope,
   private val listInteractionType: List<FaceInteractionType> = emptyList(),
+  private val timeout: Long = 15_000,
   private val onSuccess: (FaceResult) -> Unit,
 ) {
   private val _stateFlow = MutableStateFlow<State>(State())
@@ -216,7 +217,7 @@ class FaceViewModel(
   private fun restartTimeoutJob() {
     _timeoutJob?.cancel()
     _timeoutJob = coroutineScope.launch {
-      delay(10_000)
+      delay(timeout)
       finishWithType(FinishType.Timeout)
     }
   }
