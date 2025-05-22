@@ -18,10 +18,17 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class FaceViewModel(
   private val coroutineScope: CoroutineScope,
+  /** 要互动的类型列表 */
   private val listInteractionType: List<FaceInteractionType> = emptyList(),
+  /** 超时(毫秒) */
   private val timeout: Long = 15_000,
+  /** 准备阶段，最小人脸质量[0-1] */
   private val minPreparingFaceQuality: Float = 0.75f,
+  /** 互动阶段，最小人脸质量[0-1] */
   private val minInteractingFaceQuality: Float = 0.65f,
+  /** 最小验证人脸相似度[0-1] */
+  private val minValidateSimilarity: Float = 0.8f,
+  /** 成功回调 */
   private val onSuccess: (FaceResult) -> Unit,
 ) {
   private val _stateFlow = MutableStateFlow<State>(State())
@@ -37,6 +44,13 @@ class FaceViewModel(
 
   private var _timeoutJob: Job? = null
   private var _staticJob: Job? = null
+
+  init {
+    require(timeout >= 5_000)
+    require(minPreparingFaceQuality in 0f..1f)
+    require(minInteractingFaceQuality in 0f..1f)
+    require(minValidateSimilarity in 0f..1f)
+  }
 
   /** 无效类型 */
   val invalidTypeFlow: Flow<InvalidType?> = _stateFlow
@@ -170,7 +184,7 @@ class FaceViewModel(
       FaceInteractionStage.Stop -> {
         if (!_faceStateChecker.check(faceState)) return
         val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
-        if (similarity >= 0.8f) {
+        if (similarity >= minValidateSimilarity) {
           val listInteractionType = stage.listInteractionType
           if (listInteractionType.isEmpty()) {
             notifySuccess(data = checkedFaceData, image = checkedFaceImage)
