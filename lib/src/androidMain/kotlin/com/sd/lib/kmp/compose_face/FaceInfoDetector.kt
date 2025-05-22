@@ -56,6 +56,13 @@ internal class FaceInfoDetector {
       return ErrorGetFaceInfo()
     }
 
+    val srcWidth = src.width
+    val srcHeight = src.height
+    if (srcWidth <= 0 || srcHeight <= 0) {
+      FaceManager.log { "src width or height <= 0" }
+      return ErrorGetFaceInfo()
+    }
+
     val faceFeature = InspireFace.ExtractFaceFeature(session, stream, token)
     if (faceFeature == null) {
       FaceManager.log { "ExtractFaceFeature returns null" }
@@ -87,7 +94,7 @@ internal class FaceInfoDetector {
     val mouthOpen = faceInteractionsActions.jawOpen[0]
     val raiseHead = faceInteractionsActions.headRaise[0]
 
-    FaceManager.log { "faceQuality${faceQuality} srcWidth:${src.width} srcHeight:${src.height} width:${faceRect.width} height:${faceRect.height}" }
+    FaceManager.log { "faceQuality${faceQuality}" }
 
     val faceState = FaceState(
       faceQuality = faceQuality,
@@ -100,8 +107,8 @@ internal class FaceInfoDetector {
     )
 
     val faceBounds = FaceBounds(
-      srcWidth = src.width,
-      srcHeight = src.height,
+      srcWidth = srcWidth,
+      srcHeight = srcHeight,
       faceWidth = faceRect.width,
       faceHeight = faceRect.height,
     )

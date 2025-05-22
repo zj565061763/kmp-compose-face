@@ -79,7 +79,13 @@ class FaceViewModel(
         updateState { it.copy(faceCount = faceInfo.faceCount) }
       }
       is ValidFaceInfo -> {
-        updateState { it.copy(faceCount = 1, faceState = faceInfo.faceState) }
+        updateState {
+          it.copy(
+            faceCount = 1,
+            faceState = faceInfo.faceState,
+            faceBounds = faceInfo.faceBounds,
+          )
+        }
         handleValidFaceInfo(faceInfo)
       }
     }
@@ -273,6 +279,7 @@ class FaceViewModel(
     val stage: Stage = Stage.None,
     val faceCount: Int = 0,
     val faceState: FaceState? = null,
+    val faceBounds: FaceBounds? = null,
   ) {
     val isFinishedWithTimeout: Boolean get() = stage is Stage.Finished && stage.type == FinishType.Timeout
   }
@@ -315,6 +322,9 @@ class FaceViewModel(
     /** 检测到多张人脸 */
     MultiFace,
 
+    /** 人脸区域太小 */
+    SmallFace,
+
     /** 人脸质量低 */
     LowFaceQuality,
 
@@ -350,10 +360,14 @@ class FaceViewModel(
     if (stage is Stage.Preparing) {
       if (faceCount <= 0) return InvalidType.NoFace
       if (faceCount > 1) return InvalidType.MultiFace
+
       if (faceState == null) return null
       if (faceState.leftEyeOpen == false || faceState.rightEyeOpen == false) return InvalidType.LowFaceQuality
       if (faceState.faceQuality < minFaceQuality) return InvalidType.LowFaceQuality
       if (faceState.hasInteraction) return InvalidType.FaceInteraction
+
+      if (faceBounds == null) return null
+      if (faceBounds.faceWidthScale < 0.6f) return InvalidType.SmallFace
     }
     return null
   }
@@ -365,8 +379,12 @@ class FaceViewModel(
     if (stage is Stage.Interacting) {
       if (faceCount <= 0) return InvalidType.NoFace
       if (faceCount > 1) return InvalidType.MultiFace
+
       if (faceState == null) return null
       if (faceState.faceQuality < minFaceQuality) return InvalidType.LowFaceQuality
+
+      if (faceBounds == null) return null
+      if (faceBounds.faceWidthScale < 0.6f) return InvalidType.SmallFace
     }
     return null
   }

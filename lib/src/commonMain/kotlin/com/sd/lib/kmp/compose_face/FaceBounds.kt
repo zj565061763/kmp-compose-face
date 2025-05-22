@@ -5,4 +5,6 @@ data class FaceBounds(
   val srcHeight: Int,
   val faceWidth: Int,
   val faceHeight: Int,
-)
+) {
+  val faceWidthScale: Float get() = (if (srcWidth > 0) faceWidth / srcWidth.toFloat() else 0f).coerceIn(0f, 1f)
+}
