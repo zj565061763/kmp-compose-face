@@ -5,10 +5,11 @@ sealed interface FaceInfo
 
 /** 合法脸部信息 */
 interface ValidFaceInfo : FaceInfo {
-  /** 脸部状态 */
-  val faceState: FaceState
   /** 脸部数据 */
   val faceData: FloatArray
+  /** 脸部状态 */
+  val faceState: FaceState
+  val faceBounds: FaceBounds
   /** 脸部图片 */
   fun getFaceImage(): FaceImage
 }

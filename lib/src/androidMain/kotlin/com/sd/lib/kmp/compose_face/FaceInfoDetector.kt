@@ -50,6 +50,12 @@ internal class FaceInfoDetector {
       return ErrorGetFaceInfo()
     }
 
+    val faceRect = multipleFaceData.rects?.firstOrNull()
+    if (faceRect == null) {
+      FaceManager.log { "faceRect is null" }
+      return ErrorGetFaceInfo()
+    }
+
     val faceFeature = InspireFace.ExtractFaceFeature(session, stream, token)
     if (faceFeature == null) {
       FaceManager.log { "ExtractFaceFeature returns null" }
@@ -81,7 +87,7 @@ internal class FaceInfoDetector {
     val mouthOpen = faceInteractionsActions.jawOpen[0]
     val raiseHead = faceInteractionsActions.headRaise[0]
 
-    FaceManager.log { "faceQuality${faceQuality}" }
+    FaceManager.log { "faceQuality${faceQuality} srcWidth:${src.width} srcHeight:${src.height} width:${faceRect.width} height:${faceRect.height}" }
 
     val faceState = FaceState(
       faceQuality = faceQuality,
@@ -93,13 +99,21 @@ internal class FaceInfoDetector {
       raiseHead = raiseHead > 0,
     )
 
+    val faceBounds = FaceBounds(
+      srcWidth = src.width,
+      srcHeight = src.height,
+      faceWidth = faceRect.width,
+      faceHeight = faceRect.height,
+    )
+
     return SDKFaceInfo(
       session = session,
       stream = stream,
       src = src,
       token = token,
-      faceState = faceState,
       faceData = faceData,
+      faceState = faceState,
+      faceBounds = faceBounds,
     )
   }
 
@@ -122,8 +136,9 @@ internal class FaceInfoDetector {
     private val stream: ImageStream,
     private val src: Bitmap,
     private val token: FaceBasicToken,
-    override val faceState: FaceState,
     override val faceData: FloatArray,
+    override val faceState: FaceState,
+    override val faceBounds: FaceBounds,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
       val crop = runCatching {
