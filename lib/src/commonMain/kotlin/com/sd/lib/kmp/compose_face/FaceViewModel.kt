@@ -27,6 +27,7 @@ class FaceViewModel(
 
   private val _currentState get() = stateFlow.value
 
+  private val _faceStateChecker = FaceStateChecker()
   /** 通过检测的脸部数据 */
   private var _checkedFaceData: FloatArray? = null
   /** 通过检测到脸部图片 */
@@ -52,7 +53,7 @@ class FaceViewModel(
     }
 
     if (stage is Stage.None) {
-      updateState { it.copy(stage = Stage.Preparing()) }
+      updateState { it.copy(stage = Stage.Preparing) }
       startStaticJob()
     }
 
@@ -86,35 +87,22 @@ class FaceViewModel(
     if (_currentState.stage !is Stage.Finished) {
       updateState { State(stage = Stage.Finished(type = type)) }
     }
+    _faceStateChecker.reset()
     _checkedFaceData = null
     _checkedFaceImage = null
   }
 
   private fun handleValidFaceInfo(faceInfo: ValidFaceInfo) {
     when (val stage = _currentState.stage) {
-      is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo, stage = stage)
+      is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo)
       is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, stage = stage)
       else -> {}
     }
   }
 
   /** 准备阶段 */
-  private fun handleStagePreparing(
-    faceInfo: ValidFaceInfo,
-    stage: Stage.Preparing,
-  ) {
-    if (!faceInfo.faceState.checkFaceState()) {
-      // 只要有一次检测不通过，重新计数
-      updatePreparingStage { it.copy(checkCount = 0) }
-      return
-    }
-
-    val checkCount = stage.checkCount
-    if (checkCount < 10) {
-      // 如果小于检测次数，继续检测
-      updatePreparingStage { it.copy(checkCount = it.checkCount + 1) }
-      return
-    }
+  private fun handleStagePreparing(faceInfo: ValidFaceInfo) {
+    if (!_faceStateChecker.check(faceInfo.faceState)) return
 
     val checkedFaceData = faceInfo.faceData
     val checkedFaceImage = faceInfo.getFaceImage()
@@ -158,9 +146,7 @@ class FaceViewModel(
 
     when (stage.interactionStage) {
       FaceInteractionStage.Start -> {
-        if (faceState.faceQuality < MIN_FACE_QUALITY_INTERACTING) {
-          return
-        }
+        if (faceState.faceQuality < MIN_FACE_QUALITY_INTERACTING) return
         val hasTargetInteraction = when (stage.interactionType) {
           FaceInteractionType.Blink -> faceState.blink
           FaceInteractionType.Shake -> faceState.shake
@@ -180,9 +166,7 @@ class FaceViewModel(
         }
       }
       FaceInteractionStage.Stop -> {
-        if (!faceState.checkFaceState()) {
-          return
-        }
+        if (!_faceStateChecker.check(faceState)) return
         val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
         if (similarity >= 0.8f) {
           val listInteractionType = stage.listInteractionType
@@ -292,9 +276,7 @@ class FaceViewModel(
     data object None : Stage
 
     /** 准备阶段 */
-    data class Preparing(
-      val checkCount: Int = 0,
-    ) : Stage
+    data object Preparing : Stage
 
     /** 互动阶段 */
     data class Interacting(
@@ -333,6 +315,23 @@ class FaceViewModel(
 
     /** 脸部五官不自然 */
     FaceInteraction,
+  }
+
+  private class FaceStateChecker {
+    private var _count = 0
+
+    fun check(
+      faceState: FaceState,
+      targetCount: Int = 15,
+    ): Boolean {
+      require(targetCount > 0)
+      if (faceState.checkFaceState()) _count++ else _count = 0
+      return (_count >= targetCount).also { if (it) reset() }
+    }
+
+    fun reset() {
+      _count = 0
+    }
   }
 
   companion object {
