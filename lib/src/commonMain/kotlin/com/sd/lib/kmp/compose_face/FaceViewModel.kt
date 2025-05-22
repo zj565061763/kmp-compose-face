@@ -20,6 +20,8 @@ class FaceViewModel(
   private val coroutineScope: CoroutineScope,
   private val listInteractionType: List<FaceInteractionType> = emptyList(),
   private val timeout: Long = 15_000,
+  private val minPreparingFaceQuality: Float = 0.75f,
+  private val minInteractingFaceQuality: Float = 0.65f,
   private val onSuccess: (FaceResult) -> Unit,
 ) {
   private val _stateFlow = MutableStateFlow<State>(State())
@@ -146,7 +148,7 @@ class FaceViewModel(
 
     when (stage.interactionStage) {
       FaceInteractionStage.Start -> {
-        if (faceState.faceQuality < MIN_FACE_QUALITY_INTERACTING) return
+        if (faceState.faceQuality < minInteractingFaceQuality) return
         val hasTargetInteraction = when (stage.interactionType) {
           FaceInteractionType.Blink -> faceState.blink
           FaceInteractionType.Shake -> faceState.shake
@@ -237,17 +239,6 @@ class FaceViewModel(
     }
   }
 
-  private fun updatePreparingStage(update: (Stage.Preparing) -> Stage.Preparing) {
-    updateState {
-      val oldStage = it.stage
-      if (oldStage is Stage.Preparing) {
-        it.copy(stage = update(oldStage))
-      } else {
-        it
-      }
-    }
-  }
-
   private fun updateInteractingStage(update: (Stage.Interacting) -> Stage.Interacting) {
     updateState {
       val oldStage = it.stage
@@ -317,14 +308,13 @@ class FaceViewModel(
     FaceInteraction,
   }
 
-  private class FaceStateChecker {
+  private inner class FaceStateChecker {
     private var _count = 0
 
     fun check(
       faceState: FaceState,
       targetCount: Int = 15,
     ): Boolean {
-      require(targetCount > 0)
       if (faceState.checkFaceState()) _count++ else _count = 0
       return (_count >= targetCount).also { if (it) reset() }
     }
@@ -334,44 +324,45 @@ class FaceViewModel(
     }
   }
 
-  companion object {
-    private const val MIN_FACE_QUALITY_PREPARING = 0.75f
-    private const val MIN_FACE_QUALITY_INTERACTING = 0.65f
+  /** 无效类型 */
+  private fun State.invalidType(): InvalidType? {
+    return preparingInvalidType() ?: interactingInvalidType()
+  }
 
-    /** 无效类型 */
-    private fun State.invalidType(): InvalidType? {
-      return preparingInvalidType() ?: interactingInvalidType()
+  /** 准备阶段无效类型 */
+  private fun State.preparingInvalidType(
+    minFaceQuality: Float = minPreparingFaceQuality,
+  ): InvalidType? {
+    if (stage is Stage.Preparing) {
+      if (faceCount <= 0) return InvalidType.NoFace
+      if (faceCount > 1) return InvalidType.MultiFace
+      if (faceState == null) return null
+      if (faceState.leftEyeOpen == false || faceState.rightEyeOpen == false) return InvalidType.LowFaceQuality
+      if (faceState.faceQuality < minFaceQuality) return InvalidType.LowFaceQuality
+      if (faceState.hasInteraction) return InvalidType.FaceInteraction
     }
+    return null
+  }
 
-    /** 准备阶段无效类型 */
-    private fun State.preparingInvalidType(): InvalidType? {
-      if (stage is Stage.Preparing) {
-        if (faceCount <= 0) return InvalidType.NoFace
-        if (faceCount > 1) return InvalidType.MultiFace
-        if (faceState == null) return null
-        if (faceState.leftEyeOpen == false || faceState.rightEyeOpen == false) return InvalidType.LowFaceQuality
-        if (faceState.faceQuality < MIN_FACE_QUALITY_PREPARING) return InvalidType.LowFaceQuality
-        if (faceState.hasInteraction) return InvalidType.FaceInteraction
-      }
-      return null
+  /** 互动阶段无效类型 */
+  private fun State.interactingInvalidType(
+    minFaceQuality: Float = minInteractingFaceQuality,
+  ): InvalidType? {
+    if (stage is Stage.Interacting) {
+      if (faceCount <= 0) return InvalidType.NoFace
+      if (faceCount > 1) return InvalidType.MultiFace
+      if (faceState == null) return null
+      if (faceState.faceQuality < minFaceQuality) return InvalidType.LowFaceQuality
     }
+    return null
+  }
 
-    /** 互动阶段无效类型 */
-    private fun State.interactingInvalidType(): InvalidType? {
-      if (stage is Stage.Interacting) {
-        if (faceCount <= 0) return InvalidType.NoFace
-        if (faceCount > 1) return InvalidType.MultiFace
-        if (faceState == null) return null
-        if (faceState.faceQuality < MIN_FACE_QUALITY_INTERACTING) return InvalidType.LowFaceQuality
-      }
-      return null
-    }
-
-    /** 检测脸部状态是否正常 */
-    private fun FaceState.checkFaceState(): Boolean {
-      return faceQuality >= MIN_FACE_QUALITY_PREPARING
-        && leftEyeOpen == true && rightEyeOpen == true
-        && !hasInteraction
-    }
+  /** 检测脸部状态是否正常 */
+  private fun FaceState.checkFaceState(
+    minFaceQuality: Float = minPreparingFaceQuality,
+  ): Boolean {
+    return faceQuality >= minFaceQuality
+      && leftEyeOpen == true && rightEyeOpen == true
+      && !hasInteraction
   }
 }
