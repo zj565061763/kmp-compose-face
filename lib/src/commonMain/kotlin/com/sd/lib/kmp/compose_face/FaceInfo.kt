@@ -1,0 +1,48 @@
+package com.sd.lib.kmp.compose_face
+
+/** 脸部信息 */
+sealed interface FaceInfo
+
+/** 合法脸部信息 */
+interface ValidFaceInfo : FaceInfo {
+  /** 脸部状态 */
+  val faceState: FaceState
+  /** 脸部数据 */
+  val faceData: FloatArray
+  /** 脸部图片 */
+  fun getFaceImage(): FaceImage
+}
+
+/** 非法脸部数量 */
+data class InvalidFaceCountFaceInfo(val faceCount: Int) : FaceInfo
+
+/** 获取脸部信息错误 */
+data class ErrorGetFaceInfo(
+  val code: Int = SDK_ERROR,
+) : FaceInfo {
+  companion object {
+    const val SDK_ERROR = 1
+    const val RUNTIME_ERROR = 2
+  }
+}
+
+data class FaceState(
+  /** 脸部质量[0-1] */
+  val faceQuality: Float,
+
+  /** 左眼是否睁开 */
+  val leftEyeOpen: Boolean,
+  /** 右眼是否睁开 */
+  val rightEyeOpen: Boolean,
+
+  /** 是否眨眼 */
+  val blink: Boolean,
+  /** 是否摇头 */
+  val shake: Boolean,
+  /** 是否张嘴 */
+  val mouthOpen: Boolean,
+  /** 是否抬头 */
+  val raiseHead: Boolean,
+) {
+  val hasInteraction: Boolean get() = blink || shake || mouthOpen || raiseHead
+}
