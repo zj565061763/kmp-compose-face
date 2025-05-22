@@ -104,20 +104,18 @@ class ValidateActivity : ComponentActivity() {
   }
 
   private fun handleFaceResult(result: FaceResult) {
-    val bitmap = (result.image as BitmapFaceImage).bitmap
-    _faceImage = bitmap?.asImageBitmap()
-    if (bitmap != null) {
-      val savedFace = _savedData
-      val resultFace = result.data
-      val similarity = FaceManager.compare(savedFace, resultFace)
-      logMsg { "similarity:${similarity}" }
-      if (similarity > 0.8f) {
-        Toast.makeText(this, "验证成功", Toast.LENGTH_SHORT).show()
-      } else {
-        Toast.makeText(this, "验证失败", Toast.LENGTH_SHORT).show()
-      }
+    val bitmap = (result.image as BitmapFaceImage).src
+    _faceImage = bitmap.asImageBitmap()
+
+    val savedFace = _savedData
+    val resultFace = result.data
+    val similarity = FaceManager.compare(savedFace, resultFace)
+    logMsg { "similarity:${similarity}" }
+
+    if (similarity > 0.8f) {
+      Toast.makeText(this, "验证成功", Toast.LENGTH_SHORT).show()
     } else {
-      Toast.makeText(this, "获取图片失败", Toast.LENGTH_SHORT).show()
+      Toast.makeText(this, "验证失败", Toast.LENGTH_SHORT).show()
     }
   }
 

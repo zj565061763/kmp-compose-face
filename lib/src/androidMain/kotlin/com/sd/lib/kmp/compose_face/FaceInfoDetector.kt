@@ -17,7 +17,7 @@ internal class FaceInfoDetector {
     val session = _session ?: newSession().also { _session = it }
     val stream = InspireFace.CreateImageStreamFromBitmap(bitmap, InspireFace.CAMERA_ROTATION_0)
     try {
-      return detect(session, stream)
+      return detect(session, stream, bitmap)
     } catch (e: Throwable) {
       e.printStackTrace()
       return ErrorGetFaceInfo(code = ErrorGetFaceInfo.RUNTIME_ERROR)
@@ -36,6 +36,7 @@ internal class FaceInfoDetector {
   private fun detect(
     session: Session,
     stream: ImageStream,
+    src: Bitmap,
   ): FaceInfo {
     val multipleFaceData = InspireFace.ExecuteFaceTrack(session, stream)
     if (multipleFaceData == null) return InvalidFaceCountFaceInfo(faceCount = 0)
@@ -95,6 +96,7 @@ internal class FaceInfoDetector {
     return SDKFaceInfo(
       session = session,
       stream = stream,
+      src = src,
       token = token,
       faceState = faceState,
       faceData = faceData,
@@ -118,18 +120,19 @@ internal class FaceInfoDetector {
   private class SDKFaceInfo(
     private val session: Session,
     private val stream: ImageStream,
+    private val src: Bitmap,
     private val token: FaceBasicToken,
     override val faceState: FaceState,
     override val faceData: FloatArray,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
-      val bitmap = runCatching {
+      val crop = runCatching {
         InspireFace.GetFaceAlignmentImage(session, stream, token)
       }.getOrElse {
         FaceManager.log { "getFaceImage error:$it" }
         null
       }
-      return BitmapFaceImage(bitmap = bitmap)
+      return BitmapFaceImage(crop = crop, src = src)
     }
   }
 }

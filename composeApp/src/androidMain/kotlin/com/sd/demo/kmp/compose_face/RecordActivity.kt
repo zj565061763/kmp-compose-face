@@ -96,15 +96,11 @@ class RecordActivity : ComponentActivity() {
   }
 
   private fun handleFaceResult(result: FaceResult) {
-    val bitmap = (result.image as BitmapFaceImage).bitmap
-    _faceImage = bitmap?.asImageBitmap()
-    if (bitmap != null) {
-      App.saveBitmap(bitmap, "record")
-      App.saveFaceData(result.data)
-      Toast.makeText(this, "录入成功", Toast.LENGTH_SHORT).show()
-    } else {
-      Toast.makeText(this, "获取图片失败", Toast.LENGTH_SHORT).show()
-    }
+    val bitmap = (result.image as BitmapFaceImage).src
+    _faceImage = bitmap.asImageBitmap()
+    App.saveBitmap(bitmap, "record")
+    App.saveFaceData(result.data)
+    Toast.makeText(this, "录入成功", Toast.LENGTH_SHORT).show()
   }
 
   companion object {

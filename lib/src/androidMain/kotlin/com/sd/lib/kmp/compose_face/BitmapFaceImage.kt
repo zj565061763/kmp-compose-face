@@ -3,9 +3,11 @@ package com.sd.lib.kmp.compose_face
 import android.graphics.Bitmap
 
 class BitmapFaceImage(
-  val bitmap: Bitmap?,
+  val src: Bitmap,
+  val crop: Bitmap?,
 ) : FaceImage {
   override fun release() {
-    bitmap?.recycle()
+    src.recycle()
+    crop?.recycle()
   }
 }
