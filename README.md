@@ -6,5 +6,5 @@ Compose Multiplatform face recognition library based on [InspireFace](https://gi
 # Gradle
 
 ```kotlin
-implementation("io.github.zj565061763.kmp:compose-face:1.0.0-alpha02")
+implementation("io.github.zj565061763.kmp:compose-face:1.0.0-alpha03")
 ```
