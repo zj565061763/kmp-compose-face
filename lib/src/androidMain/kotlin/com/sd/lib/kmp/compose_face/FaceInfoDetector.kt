@@ -6,6 +6,9 @@ import com.insightface.sdk.inspireface.base.FaceBasicToken
 import com.insightface.sdk.inspireface.base.ImageStream
 import com.insightface.sdk.inspireface.base.Session
 
+/**
+ * 人脸信息检测，此类非线程安全，请不要并发调用
+ */
 internal class FaceInfoDetector {
   private var _session: Session? = null
   private val _facePipelineParams = InspireFace.CreateCustomParameter()
