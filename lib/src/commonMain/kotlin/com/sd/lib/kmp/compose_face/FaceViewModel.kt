@@ -43,7 +43,7 @@ class FaceViewModel(
     }
   },
   /** 超时(毫秒) */
-  private val timeout: Long = 15_000,
+  private val timeout: Long = 15_00000,
   /** 最小验证人脸相似度[0-1] */
   private val minValidateSimilarity: Float = 0.8f,
   /** 成功回调 */
@@ -354,7 +354,8 @@ class FaceViewModel(
       state: State,
       targetCount: Int = 15,
     ): Boolean {
-      if (state.checkInvalidType() != null) _count++ else _count = 0
+      require(targetCount > 0)
+      if (state.checkInvalidType() != null) _count = 0 else _count++
       return (_count >= targetCount).also { if (it) reset() }
     }
 
