@@ -116,7 +116,7 @@ internal class FaceInfoDetector {
       faceHeight = faceRect.height,
     )
 
-    FaceManager.log { "faceQuality${faceQuality} faceScale:${faceBounds.faceWidthScale}" }
+    FaceManager.log { "faceQuality${faceQuality} faceScale:${faceBounds.faceWidthScale} blink:$blink shake:$shake mouthOpen:$mouthOpen raiseHead:$raiseHead" }
 
     return SDKFaceInfo(
       session = session,

@@ -21,18 +21,9 @@ class FaceViewModel(
   /** 要互动的类型列表 */
   private val getInteractionTypes: () -> List<FaceInteractionType>,
   /** 最小人脸质量[0-1] */
-  private val getMinFaceQuality: (Stage) -> Float = {
-    when (it) {
-      is Stage.Preparing -> 0.75f
-      is Stage.Interacting -> when (it.interactionStage) {
-        FaceInteractionStage.Interacting -> 0.65f
-        FaceInteractionStage.Stop -> 0.75f
-      }
-      else -> 0f
-    }
-  },
+  private val getMinFaceQuality: (Stage) -> Float = { minFaceQualityOfStage(it) },
   /** 人脸占图片的最小比例[0-1] */
-  private val getMinFaceScale: (Stage) -> Float = { 0.5f },
+  private val getMinFaceScale: (Stage) -> Float = { minFaceScaleOfStage(it) },
   /** 超时(毫秒) */
   private val timeout: Long = 15_000,
   /** 最小验证人脸相似度[0-1] */
@@ -391,5 +382,22 @@ class FaceViewModel(
     if (faceBounds.faceWidthScale < getMinFaceScale(stage)) return InvalidType.SmallFace
 
     return null
+  }
+
+  companion object {
+    fun minFaceQualityOfStage(stage: Stage): Float {
+      if (stage is Stage.Interacting
+        && stage.interactionStage == FaceInteractionStage.Interacting
+      ) return 0.6f
+      return 0.7f
+    }
+
+    fun minFaceScaleOfStage(stage: Stage): Float {
+      if (stage is Stage.Interacting
+        && stage.interactionStage == FaceInteractionStage.Interacting
+        && stage.interactionType == FaceInteractionType.RaiseHead
+      ) return 0.4f
+      return 0.5f
+    }
   }
 }
