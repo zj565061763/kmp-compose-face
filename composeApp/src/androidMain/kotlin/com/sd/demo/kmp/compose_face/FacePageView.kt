@@ -102,7 +102,7 @@ private fun faceInteractingTips(
   interactionStage: FaceInteractionStage,
 ): String {
   return when (interactionStage) {
-    FaceInteractionStage.Start -> when (interactionType) {
+    FaceInteractionStage.Interacting -> when (interactionType) {
       FaceInteractionType.Blink -> "请缓慢眨眼"
       FaceInteractionType.Shake -> "请缓慢摇头"
       FaceInteractionType.MouthOpen -> "请缓慢张嘴"
