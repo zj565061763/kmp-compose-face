@@ -80,7 +80,7 @@ fun FacePageView(
     Spacer(Modifier.height(16.dp))
     FaceView(
       modifier = Modifier
-        .size(160.dp)
+        .size(200.dp)
         .clip(CircleShape)
         .background(Color.Red),
       vm = vm,

@@ -32,16 +32,7 @@ class FaceViewModel(
     }
   },
   /** 人脸占图片的最小比例[0-1] */
-  private val getMinFaceScale: (Stage) -> Float = {
-    when (it) {
-      is Stage.Preparing -> 0.6f
-      is Stage.Interacting -> when (it.interactionStage) {
-        FaceInteractionStage.Interacting -> 0.5f
-        FaceInteractionStage.Stop -> 0.6f
-      }
-      else -> 0f
-    }
-  },
+  private val getMinFaceScale: (Stage) -> Float = { 0.5f },
   /** 超时(毫秒) */
   private val timeout: Long = 15_00000,
   /** 最小验证人脸相似度[0-1] */
