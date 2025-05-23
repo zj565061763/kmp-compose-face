@@ -94,8 +94,6 @@ internal class FaceInfoDetector {
     val mouthOpen = faceInteractionsActions.jawOpen[0]
     val raiseHead = faceInteractionsActions.headRaise[0]
 
-    FaceManager.log { "faceQuality${faceQuality}" }
-
     val faceState = FaceState(
       faceQuality = faceQuality,
       leftEyeOpen = leftEyeOpen > 0.9f,
@@ -112,6 +110,8 @@ internal class FaceInfoDetector {
       faceWidth = faceRect.width,
       faceHeight = faceRect.height,
     )
+
+    FaceManager.log { "faceQuality${faceQuality} faceScale:${faceBounds.faceWidthScale}" }
 
     return SDKFaceInfo(
       session = session,

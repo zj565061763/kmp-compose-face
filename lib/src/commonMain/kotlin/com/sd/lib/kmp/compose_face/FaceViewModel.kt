@@ -373,7 +373,7 @@ class FaceViewModel(
       if (faceState.hasInteraction) return InvalidType.FaceInteraction
 
       if (faceBounds == null) return null
-      if (faceBounds.faceWidthScale < 0.6f) return InvalidType.SmallFace
+      if (faceBounds.faceWidthScale < getMinFaceScale(stage)) return InvalidType.SmallFace
     }
     return null
   }
@@ -388,7 +388,7 @@ class FaceViewModel(
       if (faceState.faceQuality < getMinFaceQuality(stage)) return InvalidType.LowFaceQuality
 
       if (faceBounds == null) return null
-      if (faceBounds.faceWidthScale < 0.6f) return InvalidType.SmallFace
+      if (faceBounds.faceWidthScale < getMinFaceScale(stage)) return InvalidType.SmallFace
     }
     return null
   }
