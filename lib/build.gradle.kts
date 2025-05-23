@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -20,11 +19,9 @@ kotlin {
   }
 
   listOf(
-    iosX64(),
     iosArm64(),
-    iosSimulatorArm64()
-  ).forEach {
-    it.binaries.framework {
+  ).forEach { target ->
+    target.binaries.framework {
       baseName = "com_sd_lib_kmp_compose_face"
       isStatic = true
     }
