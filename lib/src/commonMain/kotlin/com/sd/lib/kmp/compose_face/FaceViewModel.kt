@@ -336,7 +336,7 @@ class FaceViewModel(
 
     fun check(
       state: State,
-      targetCount: Int = 15,
+      targetCount: Int = 10,
     ): Boolean {
       require(targetCount > 0)
       if (state.checkInvalidType() != null) _count = 0 else _count++
