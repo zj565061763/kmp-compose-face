@@ -365,15 +365,12 @@ class FaceViewModel(
   }
 
   private fun State.checkInvalidTypeWithParams(
-    checkFaceCount: Boolean = true,
     checkEyes: Boolean = true,
     checkFaceInteraction: Boolean = true,
   ): InvalidType? {
     // 检查人脸数量
-    if (checkFaceCount) {
-      if (faceCount <= 0) return InvalidType.NoFace
-      if (faceCount > 1) return InvalidType.MultiFace
-    }
+    if (faceCount <= 0) return InvalidType.NoFace
+    if (faceCount > 1) return InvalidType.MultiFace
 
     // 检查双眼是否睁开
     if (checkEyes) {
