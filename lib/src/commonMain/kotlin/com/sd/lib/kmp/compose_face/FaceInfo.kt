@@ -46,4 +46,34 @@ data class FaceState(
   val raiseHead: Boolean,
 ) {
   val hasInteraction: Boolean get() = blink || shake || mouthOpen || raiseHead
+
+  companion object {
+    val Empty = FaceState(
+      faceQuality = 0f,
+      leftEyeOpen = false,
+      rightEyeOpen = false,
+      blink = false,
+      shake = false,
+      mouthOpen = false,
+      raiseHead = false,
+    )
+  }
+}
+
+data class FaceBounds(
+  val srcWidth: Int,
+  val srcHeight: Int,
+  val faceWidth: Int,
+  val faceHeight: Int,
+) {
+  val faceWidthScale: Float get() = (if (srcWidth > 0) faceWidth / srcWidth.toFloat() else 0f).coerceIn(0f, 1f)
+
+  companion object {
+    val Empty = FaceBounds(
+      srcWidth = 0,
+      srcHeight = 0,
+      faceWidth = 0,
+      faceHeight = 0,
+    )
+  }
 }

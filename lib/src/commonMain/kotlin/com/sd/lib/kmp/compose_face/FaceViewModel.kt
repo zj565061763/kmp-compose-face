@@ -32,7 +32,16 @@ class FaceViewModel(
     }
   },
   /** 人脸占图片的最小比例[0-1] */
-  private val getMinFaceScale: (Stage) -> Float = { 0.6f },
+  private val getMinFaceScale: (Stage) -> Float = {
+    when (it) {
+      is Stage.Preparing -> 0.6f
+      is Stage.Interacting -> when (it.interactionStage) {
+        FaceInteractionStage.Interacting -> 0.5f
+        FaceInteractionStage.Stop -> 0.6f
+      }
+      else -> 0f
+    }
+  },
   /** 超时(毫秒) */
   private val timeout: Long = 15_000,
   /** 最小验证人脸相似度[0-1] */
@@ -61,7 +70,7 @@ class FaceViewModel(
 
   /** 无效类型 */
   val invalidTypeFlow: Flow<InvalidType?> = _stateFlow
-    .map { it.invalidType() }
+    .map { it.checkInvalidType() }
     .distinctUntilChanged()
     .mapLatest { tips ->
       if (tips != null) delay(800)
@@ -82,9 +91,7 @@ class FaceViewModel(
 
     when (faceInfo) {
       is ErrorGetFaceInfo -> {}
-      is InvalidFaceCountFaceInfo -> {
-        updateState { it.copy(faceCount = faceInfo.faceCount) }
-      }
+      is InvalidFaceCountFaceInfo -> updateState { it.copy(faceCount = faceInfo.faceCount) }
       is ValidFaceInfo -> {
         updateState {
           it.copy(
@@ -93,7 +100,12 @@ class FaceViewModel(
             faceBounds = faceInfo.faceBounds,
           )
         }
-        handleValidFaceInfo(faceInfo)
+        val state = _currentState
+        when (val stage = state.stage) {
+          is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo, state = state)
+          is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, state = state, stage = stage)
+          else -> {}
+        }
       }
     }
   }
@@ -121,17 +133,12 @@ class FaceViewModel(
     _checkedFaceImage = null
   }
 
-  private fun handleValidFaceInfo(faceInfo: ValidFaceInfo) {
-    when (val stage = _currentState.stage) {
-      is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo)
-      is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, stage = stage)
-      else -> {}
-    }
-  }
-
   /** 准备阶段 */
-  private fun handleStagePreparing(faceInfo: ValidFaceInfo) {
-    if (!_faceInfoChecker.check(Stage.Preparing, faceInfo)) return
+  private fun handleStagePreparing(
+    faceInfo: ValidFaceInfo,
+    state: State,
+  ) {
+    if (!_faceInfoChecker.check(state)) return
 
     val checkedFaceData = faceInfo.faceData
     val checkedFaceImage = faceInfo.getFaceImage()
@@ -162,6 +169,7 @@ class FaceViewModel(
   /** 互动阶段 */
   private fun handleStageInteracting(
     faceInfo: ValidFaceInfo,
+    state: State,
     stage: Stage.Interacting,
   ) {
     val checkedFaceData = _checkedFaceData
@@ -173,8 +181,8 @@ class FaceViewModel(
 
     when (stage.interactionStage) {
       FaceInteractionStage.Interacting -> {
-        if (!_faceInfoChecker.check(stage, faceInfo, targetCount = 1)) return
-        val hasTargetInteraction = with(faceInfo.faceState) {
+        if (!_faceInfoChecker.check(state, targetCount = 1)) return
+        val hasTargetInteraction = with(state.faceState) {
           when (stage.interactionType) {
             FaceInteractionType.Blink -> blink
             FaceInteractionType.Shake -> shake
@@ -195,7 +203,7 @@ class FaceViewModel(
         }
       }
       FaceInteractionStage.Stop -> {
-        if (!_faceInfoChecker.check(stage, faceInfo)) return
+        if (!_faceInfoChecker.check(state)) return
         val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
         if (similarity >= minValidateSimilarity) {
           val listInteractionType = stage.listInteractionType
@@ -285,8 +293,8 @@ class FaceViewModel(
   data class State(
     val stage: Stage = Stage.None,
     val faceCount: Int = 0,
-    val faceState: FaceState? = null,
-    val faceBounds: FaceBounds? = null,
+    val faceState: FaceState = FaceState.Empty,
+    val faceBounds: FaceBounds = FaceBounds.Empty,
   ) {
     val isFinishedWithTimeout: Boolean get() = stage is Stage.Finished && stage.type == FinishType.Timeout
   }
@@ -343,11 +351,10 @@ class FaceViewModel(
     private var _count = 0
 
     fun check(
-      stage: Stage,
-      faceInfo: ValidFaceInfo,
+      state: State,
       targetCount: Int = 15,
     ): Boolean {
-      if (checkFaceInfo(stage, faceInfo)) _count++ else _count = 0
+      if (state.checkInvalidType() != null) _count++ else _count = 0
       return (_count >= targetCount).also { if (it) reset() }
     }
 
@@ -356,70 +363,42 @@ class FaceViewModel(
     }
   }
 
-  /** 无效类型 */
-  private fun State.invalidType(): InvalidType? {
-    return preparingInvalidType() ?: interactingInvalidType()
+  private fun State.checkInvalidType(): InvalidType? {
+    return when (stage) {
+      is Stage.Preparing -> checkInvalidTypeWithParams()
+      is Stage.Interacting -> checkInvalidTypeWithParams(checkEyes = false, checkFaceInteraction = false)
+      else -> null
+    }
   }
 
-  /** 准备阶段无效类型 */
-  private fun State.preparingInvalidType(): InvalidType? {
-    if (stage is Stage.Preparing) {
+  private fun State.checkInvalidTypeWithParams(
+    checkFaceCount: Boolean = true,
+    checkEyes: Boolean = true,
+    checkFaceInteraction: Boolean = true,
+  ): InvalidType? {
+    // 检查人脸数量
+    if (checkFaceCount) {
       if (faceCount <= 0) return InvalidType.NoFace
       if (faceCount > 1) return InvalidType.MultiFace
+    }
 
-      if (faceState == null) return null
-      if (faceState.leftEyeOpen == false || faceState.rightEyeOpen == false) return InvalidType.LowFaceQuality
-      if (faceState.faceQuality < getMinFaceQuality(stage)) return InvalidType.LowFaceQuality
+    // 检查双眼是否睁开
+    if (checkEyes) {
+      if (faceState.leftEyeOpen == false) return InvalidType.LowFaceQuality
+      if (faceState.rightEyeOpen == false) return InvalidType.LowFaceQuality
+    }
+
+    // 检查人脸质量是否太低
+    if (faceState.faceQuality < getMinFaceQuality(stage)) return InvalidType.LowFaceQuality
+
+    // 检查人脸互动
+    if (checkFaceInteraction) {
       if (faceState.hasInteraction) return InvalidType.FaceInteraction
-
-      if (faceBounds == null) return null
-      if (faceBounds.faceWidthScale < getMinFaceScale(stage)) return InvalidType.SmallFace
     }
+
+    // 检查人脸区域是否太小
+    if (faceBounds.faceWidthScale < getMinFaceScale(stage)) return InvalidType.SmallFace
+
     return null
-  }
-
-  /** 互动阶段无效类型 */
-  private fun State.interactingInvalidType(): InvalidType? {
-    if (stage is Stage.Interacting) {
-      if (faceCount <= 0) return InvalidType.NoFace
-      if (faceCount > 1) return InvalidType.MultiFace
-
-      if (faceState == null) return null
-      if (faceState.faceQuality < getMinFaceQuality(stage)) return InvalidType.LowFaceQuality
-
-      if (faceBounds == null) return null
-      if (faceBounds.faceWidthScale < getMinFaceScale(stage)) return InvalidType.SmallFace
-    }
-    return null
-  }
-
-  /** 检查脸部信息 */
-  private fun checkFaceInfo(
-    stage: Stage,
-    faceInfo: ValidFaceInfo,
-  ): Boolean {
-    return checkFaceState(stage, faceInfo.faceState) && checkFaceBounds(stage, faceInfo.faceBounds)
-  }
-
-  /** 检测脸部状态是否正常 */
-  private fun checkFaceState(
-    stage: Stage,
-    faceState: FaceState,
-  ): Boolean {
-    return with(faceState) {
-      faceQuality >= getMinFaceQuality(stage)
-        && leftEyeOpen == true && rightEyeOpen == true
-        && !hasInteraction
-    }
-  }
-
-  /** 检测脸部区域是否正常 */
-  private fun checkFaceBounds(
-    stage: Stage,
-    faceBounds: FaceBounds,
-  ): Boolean {
-    return with(faceBounds) {
-      faceWidthScale >= getMinFaceScale(stage)
-    }
   }
 }
