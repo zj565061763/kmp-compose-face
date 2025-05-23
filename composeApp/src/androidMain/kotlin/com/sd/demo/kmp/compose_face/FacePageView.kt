@@ -33,12 +33,17 @@ fun FacePageView(
   onClickExit: () -> Unit,
 ) {
   val state by vm.stateFlow.collectAsStateWithLifecycle()
-  if (state.isFinishedWithTimeout) {
+
+  val finishTips = when {
+    state.isFinishedWithTimeout -> "超时"
+    state.isFinishedWithInternalError -> "内部错误"
+    else -> ""
+  }
+
+  if (finishTips.isNotEmpty()) {
     AlertDialog(
       onDismissRequest = {},
-      text = {
-        Text(text = "超时")
-      },
+      text = { Text(text = finishTips) },
       confirmButton = {
         TextButton(onClick = { vm.restart() }) {
           Text(text = "再试一次")
