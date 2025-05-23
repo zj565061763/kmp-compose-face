@@ -187,14 +187,14 @@ class FaceViewModel(
         }
       }
       FaceInteractionStage.Stop -> {
-        val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
-        if (similarity >= minValidateSimilarity) {
-          val listInteractionType = stage.listInteractionType
-          if (listInteractionType.isEmpty()) {
+        val listInteractionType = stage.listInteractionType
+        if (listInteractionType.isEmpty()) {
+          val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
+          if (similarity >= minValidateSimilarity) {
             notifySuccess(data = checkedFaceData, image = checkedFaceImage)
-          } else {
-            moveToNextInteractionType(listInteractionType)
           }
+        } else {
+          moveToNextInteractionType(listInteractionType)
         }
       }
     }
