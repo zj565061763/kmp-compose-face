@@ -9,6 +9,7 @@ interface ValidFaceInfo : FaceInfo {
   val faceData: FloatArray
   /** 脸部状态 */
   val faceState: FaceState
+  /** 脸部区域 */
   val faceBounds: FaceBounds
   /** 脸部图片 */
   fun getFaceImage(): FaceImage
@@ -27,6 +28,7 @@ data class ErrorGetFaceInfo(
   }
 }
 
+/** 脸部状态 */
 data class FaceState(
   /** 脸部质量[0-1] */
   val faceQuality: Float,
@@ -60,12 +62,18 @@ data class FaceState(
   }
 }
 
+/** 脸部区域 */
 data class FaceBounds(
+  /** 源图宽度 */
   val srcWidth: Int,
+  /** 源图高度 */
   val srcHeight: Int,
+  /** 脸部宽度 */
   val faceWidth: Int,
+  /** 脸部高度 */
   val faceHeight: Int,
 ) {
+  /** 脸部宽度占源图宽度的比例[0-1] */
   val faceWidthScale: Float get() = (if (srcWidth > 0) faceWidth / srcWidth.toFloat() else 0f).coerceIn(0f, 1f)
 
   companion object {
