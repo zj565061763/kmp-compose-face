@@ -20,8 +20,6 @@ class FaceViewModel(
   private val coroutineScope: CoroutineScope,
   /** 要互动的类型列表 */
   private val listInteractionType: List<FaceInteractionType> = emptyList(),
-  /** 超时(毫秒) */
-  private val timeout: Long = 15_000,
   /** 最小人脸质量[0-1] */
   private val getMinFaceQuality: (Stage) -> Float = {
     when (it) {
@@ -33,6 +31,10 @@ class FaceViewModel(
       else -> 0f
     }
   },
+  /** 人脸占图片的最小比例[0-1] */
+  private val getMinFaceScale: (Stage) -> Float = { 0.6f },
+  /** 超时(毫秒) */
+  private val timeout: Long = 15_000,
   /** 最小验证人脸相似度[0-1] */
   private val minValidateSimilarity: Float = 0.8f,
   /** 成功回调 */
@@ -43,7 +45,7 @@ class FaceViewModel(
 
   private val _currentState get() = stateFlow.value
 
-  private val _faceStateChecker = FaceStateChecker()
+  private val _faceInfoChecker = FaceInfoChecker()
   /** 通过检测的脸部数据 */
   private var _checkedFaceData: FloatArray? = null
   /** 通过检测到脸部图片 */
@@ -114,7 +116,7 @@ class FaceViewModel(
     if (_currentState.stage !is Stage.Finished) {
       updateState { State(stage = Stage.Finished(type = type)) }
     }
-    _faceStateChecker.reset()
+    _faceInfoChecker.reset()
     _checkedFaceData = null
     _checkedFaceImage = null
   }
@@ -129,7 +131,7 @@ class FaceViewModel(
 
   /** 准备阶段 */
   private fun handleStagePreparing(faceInfo: ValidFaceInfo) {
-    if (!_faceStateChecker.check(Stage.Preparing, faceInfo.faceState)) return
+    if (!_faceInfoChecker.check(Stage.Preparing, faceInfo)) return
 
     val checkedFaceData = faceInfo.faceData
     val checkedFaceImage = faceInfo.getFaceImage()
@@ -169,16 +171,16 @@ class FaceViewModel(
       return
     }
 
-    val faceState = faceInfo.faceState
-
     when (stage.interactionStage) {
       FaceInteractionStage.Interacting -> {
-        if (faceState.faceQuality < getMinFaceQuality(stage)) return
-        val hasTargetInteraction = when (stage.interactionType) {
-          FaceInteractionType.Blink -> faceState.blink
-          FaceInteractionType.Shake -> faceState.shake
-          FaceInteractionType.MouthOpen -> faceState.mouthOpen
-          FaceInteractionType.RaiseHead -> faceState.raiseHead
+        if (!_faceInfoChecker.check(stage, faceInfo, targetCount = 1)) return
+        val hasTargetInteraction = with(faceInfo.faceState) {
+          when (stage.interactionType) {
+            FaceInteractionType.Blink -> blink
+            FaceInteractionType.Shake -> shake
+            FaceInteractionType.MouthOpen -> mouthOpen
+            FaceInteractionType.RaiseHead -> raiseHead
+          }
         }
         if (hasTargetInteraction) {
           val targetInteractionCount = 3
@@ -193,7 +195,7 @@ class FaceViewModel(
         }
       }
       FaceInteractionStage.Stop -> {
-        if (!_faceStateChecker.check(stage, faceState)) return
+        if (!_faceInfoChecker.check(stage, faceInfo)) return
         val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
         if (similarity >= minValidateSimilarity) {
           val listInteractionType = stage.listInteractionType
@@ -337,15 +339,15 @@ class FaceViewModel(
     FaceInteraction,
   }
 
-  private inner class FaceStateChecker {
+  private inner class FaceInfoChecker {
     private var _count = 0
 
     fun check(
       stage: Stage,
-      faceState: FaceState,
+      faceInfo: ValidFaceInfo,
       targetCount: Int = 15,
     ): Boolean {
-      if (faceState.checkFaceState(stage)) _count++ else _count = 0
+      if (checkFaceInfo(stage, faceInfo)) _count++ else _count = 0
       return (_count >= targetCount).also { if (it) reset() }
     }
 
@@ -391,10 +393,33 @@ class FaceViewModel(
     return null
   }
 
+  /** 检查脸部信息 */
+  private fun checkFaceInfo(
+    stage: Stage,
+    faceInfo: ValidFaceInfo,
+  ): Boolean {
+    return checkFaceState(stage, faceInfo.faceState) && checkFaceBounds(stage, faceInfo.faceBounds)
+  }
+
   /** 检测脸部状态是否正常 */
-  private fun FaceState.checkFaceState(stage: Stage): Boolean {
-    return faceQuality >= getMinFaceQuality(stage)
-      && leftEyeOpen == true && rightEyeOpen == true
-      && !hasInteraction
+  private fun checkFaceState(
+    stage: Stage,
+    faceState: FaceState,
+  ): Boolean {
+    return with(faceState) {
+      faceQuality >= getMinFaceQuality(stage)
+        && leftEyeOpen == true && rightEyeOpen == true
+        && !hasInteraction
+    }
+  }
+
+  /** 检测脸部区域是否正常 */
+  private fun checkFaceBounds(
+    stage: Stage,
+    faceBounds: FaceBounds,
+  ): Boolean {
+    return with(faceBounds) {
+      faceWidthScale >= getMinFaceScale(stage)
+    }
   }
 }
