@@ -13,6 +13,7 @@ internal class FaceInfoDetector {
     .enableLiveness(true)
     .enableInteractionLiveness(true)
 
+  /** 检测[bitmap]中的人脸信息 */
   fun detect(bitmap: Bitmap): FaceInfo {
     val session = _session ?: newSession().also { _session = it }
     val stream = InspireFace.CreateImageStreamFromBitmap(bitmap, InspireFace.CAMERA_ROTATION_0)
@@ -26,6 +27,7 @@ internal class FaceInfoDetector {
     }
   }
 
+  /** 不需要检测时，释放 */
   fun release() {
     _session?.also {
       _session = null
