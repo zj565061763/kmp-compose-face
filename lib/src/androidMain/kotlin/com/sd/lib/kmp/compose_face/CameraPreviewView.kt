@@ -66,16 +66,16 @@ internal fun CameraPreviewView(
       }
 
       val cp = cameraProvider ?: ProcessCameraProvider.awaitInstance(context).also { cameraProvider = it }
+      cp.unbindAll()
 
       runCatching {
-        cp.unbindAll()
         cp.bindToLifecycle(
           lifecycleOwner,
           CameraSelector.DEFAULT_FRONT_CAMERA,
           previewUseCase, imageAnalyzerUseCase,
         )
       }.onFailure {
-        FaceManager.log { "CameraProvider bind error:$it" }
+        FaceManager.log { "CameraProvider bindToLifecycle error:$it" }
       }
     }
   }
