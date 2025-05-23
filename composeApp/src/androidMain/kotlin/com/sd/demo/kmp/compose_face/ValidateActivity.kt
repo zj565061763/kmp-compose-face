@@ -34,7 +34,7 @@ import com.sd.lib.kmp.compose_face.FaceViewModel
 class ValidateActivity : ComponentActivity() {
   private val _vm = FaceViewModel(
     coroutineScope = lifecycleScope,
-    listInteractionType = listOf(FaceInteractionType.entries.random()),
+    getInteractionTypes = { listOf(FaceInteractionType.entries.random()) },
     onSuccess = { handleFaceResult(it) },
   )
 

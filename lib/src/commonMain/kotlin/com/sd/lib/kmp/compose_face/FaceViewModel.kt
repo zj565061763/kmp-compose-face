@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 class FaceViewModel(
   private val coroutineScope: CoroutineScope,
   /** 要互动的类型列表 */
-  private val listInteractionType: List<FaceInteractionType> = emptyList(),
+  private val getInteractionTypes: () -> List<FaceInteractionType>,
   /** 最小人脸质量[0-1] */
   private val getMinFaceQuality: (Stage) -> Float = {
     when (it) {
@@ -134,6 +134,7 @@ class FaceViewModel(
     val checkedFaceData = faceInfo.faceData
     val checkedFaceImage = faceInfo.getFaceImage()
 
+    val listInteractionType = getInteractionTypes()
     if (listInteractionType.isEmpty()) {
       notifySuccess(data = checkedFaceData, image = checkedFaceImage)
       return

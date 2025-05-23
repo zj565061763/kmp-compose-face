@@ -33,7 +33,7 @@ import com.sd.lib.kmp.compose_face.FaceViewModel
 class RecordActivity : ComponentActivity() {
   private val _vm = FaceViewModel(
     coroutineScope = lifecycleScope,
-    listInteractionType = FaceInteractionType.entries,
+    getInteractionTypes = { FaceInteractionType.entries },
     onSuccess = { handleFaceResult(it) },
   )
 
