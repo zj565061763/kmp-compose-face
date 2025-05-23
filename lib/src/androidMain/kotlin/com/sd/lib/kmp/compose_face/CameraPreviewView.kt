@@ -80,8 +80,8 @@ internal fun CameraPreviewView(
     }
   }
 
-  val rotationProvider = remember { RotationProvider(context) }
-  DisposableEffect(rotationProvider) {
+  DisposableEffect(Unit) {
+    val rotationProvider = RotationProvider(context)
     val listener = object : RotationProvider.Listener {
       override fun onRotationChanged(rotation: Int) {
         imageAnalyzerUseCase.targetRotation = rotation
