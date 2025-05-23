@@ -115,6 +115,6 @@ private fun faceInteractingTips(
       FaceInteractionType.MouthOpen -> "请缓慢张嘴"
       FaceInteractionType.RaiseHead -> "请缓慢抬头"
     }
-    FaceInteractionStage.Stop -> "请保持正脸"
+    FaceInteractionStage.Stop -> ""
   }
 }

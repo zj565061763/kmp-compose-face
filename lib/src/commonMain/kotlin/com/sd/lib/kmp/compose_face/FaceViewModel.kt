@@ -162,9 +162,10 @@ class FaceViewModel(
       return
     }
 
+    if (!_faceInfoChecker.check(state, targetCount = 1)) return
+
     when (stage.interactionStage) {
       FaceInteractionStage.Interacting -> {
-        if (!_faceInfoChecker.check(state, targetCount = 1)) return
         val hasTargetInteraction = with(state.faceState) {
           when (stage.interactionType) {
             FaceInteractionType.Blink -> blink
@@ -174,7 +175,7 @@ class FaceViewModel(
           }
         }
         if (hasTargetInteraction) {
-          val targetInteractionCount = 3
+          val targetInteractionCount = 2
           updateInteractingStage {
             val newCount = it.interactionCount + 1
             if (newCount >= targetInteractionCount) {
@@ -186,7 +187,6 @@ class FaceViewModel(
         }
       }
       FaceInteractionStage.Stop -> {
-        if (!_faceInfoChecker.check(state)) return
         val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
         if (similarity >= minValidateSimilarity) {
           val listInteractionType = stage.listInteractionType
