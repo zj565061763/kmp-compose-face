@@ -11,7 +11,7 @@ object FaceManager {
   private var _hasInit = false
 
   /** 初始化 */
-  fun init(modelPath: String = "") {
+  fun init(modelPath: String = "Pikachu") {
     if (_hasInit) return
     val ret = HFLaunchInspireFace(modelPath).toInt()
     _hasInit = ret == HSUCCEED
