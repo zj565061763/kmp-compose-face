@@ -44,45 +44,48 @@ internal class FaceInfoDetector {
     src: Bitmap,
   ): FaceInfo {
     val multipleFaceData = InspireFace.ExecuteFaceTrack(session, stream)
-    if (multipleFaceData == null) return InvalidFaceCountFaceInfo(faceCount = 0)
+    if (multipleFaceData == null) {
+      FaceManager.log { "detect multipleFaceData is null" }
+      return ErrorGetFaceInfo()
+    }
 
     val faceCount = multipleFaceData.detectedNum.coerceAtLeast(0)
     if (faceCount != 1) return InvalidFaceCountFaceInfo(faceCount = faceCount)
 
     val token = multipleFaceData.tokens?.firstOrNull()
     if (token == null) {
-      FaceManager.log { "token is null" }
+      FaceManager.log { "detect token is null" }
       return ErrorGetFaceInfo()
     }
 
     val faceRect = multipleFaceData.rects?.firstOrNull()
     if (faceRect == null) {
-      FaceManager.log { "faceRect is null" }
+      FaceManager.log { "detect faceRect is null" }
       return ErrorGetFaceInfo()
     }
 
     val srcWidth = src.width
     val srcHeight = src.height
     if (srcWidth <= 0 || srcHeight <= 0) {
-      FaceManager.log { "src width or height <= 0" }
+      FaceManager.log { "detect src width or height <= 0" }
       return ErrorGetFaceInfo()
     }
 
     val faceFeature = InspireFace.ExtractFaceFeature(session, stream, token)
     if (faceFeature == null) {
-      FaceManager.log { "ExtractFaceFeature returns null" }
+      FaceManager.log { "detect ExtractFaceFeature returns null" }
       return ErrorGetFaceInfo()
     }
 
     val faceData = faceFeature.data
     if (faceData == null || faceData.isEmpty()) {
-      FaceManager.log { "FaceFeature.data is null or empty" }
+      FaceManager.log { "detect FaceFeature.data is null or empty" }
       return ErrorGetFaceInfo()
     }
 
     val successPipeline = InspireFace.MultipleFacePipelineProcess(session, stream, multipleFaceData, _facePipelineParams)
     if (!successPipeline) {
-      FaceManager.log { "MultipleFacePipelineProcess failed" }
+      FaceManager.log { "detect MultipleFacePipelineProcess failed" }
       return ErrorGetFaceInfo()
     }
 
@@ -116,7 +119,7 @@ internal class FaceInfoDetector {
       faceHeight = faceRect.height,
     )
 
-    FaceManager.log { "faceQuality${faceQuality} faceScale:${faceBounds.faceWidthScale} blink:$blink shake:$shake mouthOpen:$mouthOpen raiseHead:$raiseHead" }
+    FaceManager.log { "detect faceQuality${faceQuality} faceScale:${faceBounds.faceWidthScale} blink:$blink shake:$shake mouthOpen:$mouthOpen raiseHead:$raiseHead" }
 
     return SDKFaceInfo(
       session = session,
