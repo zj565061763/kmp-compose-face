@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.DefaultCInteropSettings
 
 plugins {
   alias(libs.plugins.androidLibrary)
@@ -24,6 +25,12 @@ kotlin {
     target.binaries.framework {
       baseName = "com_sd_lib_kmp_compose_face"
       isStatic = true
+    }
+    target.compilations.getByName("main") {
+      val InspireFace by createFrameworkCinterop("InspireFace")
+    }
+    target.binaries.all {
+      createFrameworkLinkerOpts("InspireFace")
     }
   }
 
@@ -58,4 +65,21 @@ android {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
   }
+}
+
+fun org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation.createFrameworkCinterop(
+  name: String,
+): NamedDomainObjectContainerCreatingDelegateProvider<DefaultCInteropSettings> {
+  val frameworksDir = "$projectDir/frameworks/"
+  return cinterops.creating {
+    definitionFile.set(project.file("frameworks/cinterop/${name}.def"))
+    compilerOpts("-framework", name, "-F$frameworksDir")
+  }
+}
+
+fun org.jetbrains.kotlin.gradle.plugin.mpp.NativeBinary.createFrameworkLinkerOpts(
+  name: String,
+) {
+  val frameworksDir = "$projectDir/frameworks/"
+  linkerOpts("-framework", name, "-F$frameworksDir")
 }

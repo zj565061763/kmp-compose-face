@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun FaceView(
-  modifier: Modifier = Modifier,
+actual fun FaceView(
+  modifier: Modifier,
   vm: FaceViewModel,
 ) {
   val state by vm.stateFlow.collectAsStateWithLifecycle()

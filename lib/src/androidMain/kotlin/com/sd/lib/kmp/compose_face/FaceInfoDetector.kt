@@ -92,10 +92,6 @@ internal class FaceInfoDetector {
     val faceQualityConfidence = InspireFace.GetFaceQualityConfidence(session)
     val faceQuality = faceQualityConfidence.confidence[0]
 
-    val faceInteractionState = InspireFace.GetFaceInteractionStateResult(session)
-    val leftEyeOpen = faceInteractionState.leftEyeStatusConfidence[0]
-    val rightEyeOpen = faceInteractionState.rightEyeStatusConfidence[0]
-
     val faceInteractionsActions = InspireFace.GetFaceInteractionActionsResult(session)
     val blink = faceInteractionsActions.blink[0]
     val shake = faceInteractionsActions.shake[0]
@@ -104,8 +100,8 @@ internal class FaceInfoDetector {
 
     val faceState = FaceState(
       faceQuality = faceQuality,
-      leftEyeOpen = leftEyeOpen > 0.9f,
-      rightEyeOpen = rightEyeOpen > 0.9f,
+      leftEyeOpen = true,
+      rightEyeOpen = true,
       blink = blink > 0,
       shake = shake > 0,
       mouthOpen = mouthOpen > 0,
