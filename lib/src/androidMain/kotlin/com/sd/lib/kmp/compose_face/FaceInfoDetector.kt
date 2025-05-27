@@ -43,6 +43,13 @@ internal class FaceInfoDetector {
     stream: ImageStream,
     src: Bitmap,
   ): FaceInfo {
+    val srcWidth = src.width
+    val srcHeight = src.height
+    if (srcWidth <= 0 || srcHeight <= 0) {
+      FaceManager.log { "detect src width or height <= 0" }
+      return ErrorGetFaceInfo()
+    }
+
     val multipleFaceData = InspireFace.ExecuteFaceTrack(session, stream)
     if (multipleFaceData == null) {
       FaceManager.log { "detect multipleFaceData is null" }
@@ -52,22 +59,15 @@ internal class FaceInfoDetector {
     val faceCount = multipleFaceData.detectedNum.coerceAtLeast(0)
     if (faceCount != 1) return InvalidFaceCountFaceInfo(faceCount = faceCount)
 
-    val token = multipleFaceData.tokens?.firstOrNull()
-    if (token == null) {
-      FaceManager.log { "detect token is null" }
-      return ErrorGetFaceInfo()
-    }
-
     val faceRect = multipleFaceData.rects?.firstOrNull()
     if (faceRect == null) {
       FaceManager.log { "detect faceRect is null" }
       return ErrorGetFaceInfo()
     }
 
-    val srcWidth = src.width
-    val srcHeight = src.height
-    if (srcWidth <= 0 || srcHeight <= 0) {
-      FaceManager.log { "detect src width or height <= 0" }
+    val token = multipleFaceData.tokens?.firstOrNull()
+    if (token == null) {
+      FaceManager.log { "detect token is null" }
       return ErrorGetFaceInfo()
     }
 
