@@ -20,7 +20,7 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 
 @OptIn(ExperimentalForeignApi::class)
-internal class HFSessionHolder : AutoCloseable {
+internal class HFSessionHolder {
   private var _sessionPtr: CPointerVarOf<HFSession>? = null
   private var _session: HFSession? = null
 
@@ -53,7 +53,7 @@ internal class HFSessionHolder : AutoCloseable {
     HFSessionSetFilterMinimumFacePixelSize(session, 0)
   }
 
-  override fun close() {
+  fun close() {
     _session?.also {
       _session = null
       HFReleaseInspireFaceSession(it)

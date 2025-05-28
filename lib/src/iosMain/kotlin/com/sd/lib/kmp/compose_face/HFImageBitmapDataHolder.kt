@@ -21,7 +21,7 @@ import platform.CoreVideo.CVPixelBufferUnlockBaseAddress
 @OptIn(ExperimentalForeignApi::class)
 class HFImageBitmapDataHolder(
   private val buffer: CMSampleBufferRef,
-) : AutoCloseable {
+) {
   private var _bgr: CArrayPointer<UByteVar>? = null
   private var _data: HFImageBitmapData? = null
 
@@ -64,7 +64,7 @@ class HFImageBitmapDataHolder(
     init()
   }
 
-  override fun close() {
+  fun close() {
     _bgr?.also {
       _bgr = null
       nativeHeap.free(it.rawValue)
