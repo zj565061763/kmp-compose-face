@@ -243,7 +243,7 @@ internal class FaceInfoDetector {
       }
     }
 
-    val faceQuality = faceQualityConfidence.confidence.toFloatArray(1)?.firstOrNull()
+    val faceQuality = faceQualityConfidence.confidence?.get(0)
     if (faceQuality == null) {
       FaceManager.log { "detect faceQuality is null" }
       return ErrorGetFaceInfo()
