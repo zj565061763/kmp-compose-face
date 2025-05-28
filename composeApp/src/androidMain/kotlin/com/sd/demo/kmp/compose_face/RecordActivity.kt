@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import com.sd.lib.kmp.compose_face.BitmapFaceImage
+import com.sd.lib.kmp.compose_face.FaceImageWithBitmap
 import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceResult
 import com.sd.lib.kmp.compose_face.FaceViewModel
@@ -96,7 +96,7 @@ class RecordActivity : ComponentActivity() {
   }
 
   private fun handleFaceResult(result: FaceResult) {
-    val bitmap = (result.image as BitmapFaceImage).src
+    val bitmap = (result.image as FaceImageWithBitmap).src
     _faceImage = bitmap.asImageBitmap()
     App.saveBitmap(bitmap, "record")
     App.saveFaceData(result.data)
