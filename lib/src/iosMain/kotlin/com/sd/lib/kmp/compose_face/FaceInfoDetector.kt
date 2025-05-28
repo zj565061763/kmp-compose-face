@@ -85,9 +85,7 @@ internal class FaceInfoDetector {
     session: HFSession,
     imageData: BGRImageData,
   ): FaceInfo {
-    val srcWidth = imageData.width
-    val srcHeight = imageData.height
-    if (srcWidth <= 0 || srcHeight <= 0) {
+    if (imageData.width <= 0 || imageData.height <= 0) {
       FaceManager.log { "detect src width or height <= 0" }
       return ErrorGetFaceInfo()
     }
