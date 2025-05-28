@@ -43,7 +43,6 @@ internal fun CameraPreviewView(
     LaunchedEffect(pv) {
       previewLayer.frame = pv.bounds
       previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
-      previewLayer.session = captureSession
       previewLayer.removeFromSuperlayer()
       pv.layer.addSublayer(previewLayer)
     }
