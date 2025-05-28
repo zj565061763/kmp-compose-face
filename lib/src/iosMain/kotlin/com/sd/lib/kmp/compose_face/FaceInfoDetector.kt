@@ -29,23 +29,13 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.FloatVarOf
 import kotlinx.cinterop.IntVarOf
 import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.convert
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readValue
-import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.set
 import kotlinx.cinterop.value
-import platform.CoreMedia.CMSampleBufferGetImageBuffer
 import platform.CoreMedia.CMSampleBufferRef
-import platform.CoreVideo.CVPixelBufferGetBaseAddress
-import platform.CoreVideo.CVPixelBufferGetHeight
-import platform.CoreVideo.CVPixelBufferGetWidth
-import platform.CoreVideo.CVPixelBufferLockBaseAddress
 
 @OptIn(ExperimentalForeignApi::class)
 internal class FaceInfoDetector {
@@ -58,7 +48,12 @@ internal class FaceInfoDetector {
       release()
       return ErrorGetFaceInfo()
     }
-    return memScoped { detect(buffer, session) }
+    return memScoped {
+      detect(
+        session = session,
+        imageDataHolder = HFImageBitmapDataHolder(buffer),
+      )
+    }
   }
 
   /** 不需要检测时，释放 */
@@ -70,13 +65,13 @@ internal class FaceInfoDetector {
   }
 
   private fun MemScope.detect(
-    buffer: CMSampleBufferRef,
     session: HFSession,
+    imageDataHolder: HFImageBitmapDataHolder,
   ): FaceInfo {
-    // HFImageBitmapData
-    val imageData = bufferToBitmapData(buffer)
+    val imageData = imageDataHolder.get()
     if (imageData == null) {
-      FaceManager.log { "detect getHFImageBitmapData returns null" }
+      FaceManager.log { "detect imageData is null" }
+      imageDataHolder.close()
       return ErrorGetFaceInfo()
     }
 
@@ -312,38 +307,10 @@ internal class FaceInfoDetector {
         }
       }
     }
-  }
-}
 
-@OptIn(ExperimentalForeignApi::class)
-private fun MemScope.bufferToBitmapData(buffer: CMSampleBufferRef): HFImageBitmapData? {
-  val imageBuffer = CMSampleBufferGetImageBuffer(buffer)
-  if (imageBuffer == null) return null
-
-  CVPixelBufferLockBaseAddress(imageBuffer, 0.convert())
-  val baseAddress = CVPixelBufferGetBaseAddress(imageBuffer)?.reinterpret<UByteVar>() ?: return null
-
-  val width = CVPixelBufferGetWidth(imageBuffer).toInt()
-  val height = CVPixelBufferGetHeight(imageBuffer).toInt()
-
-  val pixelCount = width * height
-  val bgrSize = pixelCount * 3
-  val bgr = allocArray<UByteVar>(bgrSize)
-
-  var m = 0
-  var n = 0
-  repeat(pixelCount) {
-    bgr[m++] = baseAddress[n++] // B
-    bgr[m++] = baseAddress[n++] // G
-    bgr[m++] = baseAddress[n++] // R
-    n++ // skip Alpha
-  }
-
-  return alloc<HFImageBitmapData>().apply {
-    this.channels = 3
-    this.width = width
-    this.height = height
-    this.data = bgr
+    override fun close() {
+      // TODO
+    }
   }
 }
 

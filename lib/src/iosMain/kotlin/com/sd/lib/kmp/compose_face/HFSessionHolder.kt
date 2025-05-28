@@ -26,7 +26,7 @@ internal class HFSessionHolder : AutoCloseable {
 
   fun get(): HFSession? = _session
 
-  private fun initHFSession() {
+  private fun init() {
     val sessionPtr = nativeHeap.alloc<CPointerVarOf<HFSession>>().also { _sessionPtr = it }
     HFCreateInspireFaceSessionOptional(
       customOption = HF_ENABLE_FACE_RECOGNITION or HF_ENABLE_QUALITY or HF_ENABLE_INTERACTION or HF_ENABLE_LIVENESS,
@@ -62,6 +62,6 @@ internal class HFSessionHolder : AutoCloseable {
   }
 
   init {
-    initHFSession()
+    init()
   }
 }

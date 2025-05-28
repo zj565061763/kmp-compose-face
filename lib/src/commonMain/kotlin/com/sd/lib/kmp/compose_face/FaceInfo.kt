@@ -13,6 +13,8 @@ interface ValidFaceInfo : FaceInfo {
   val faceBounds: FaceBounds
   /** 脸部图片 */
   fun getFaceImage(): FaceImage
+  /** 释放资源 */
+  fun close()
 }
 
 /** 非法脸部数量 */
