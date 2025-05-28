@@ -24,12 +24,13 @@ internal actual fun faceCompare(a: FloatArray, b: FloatArray): Float {
 
     val similarityPtr = alloc<FloatVarOf<Float>>()
     val ret = HFFaceComparison(fa.readValue(), fb.readValue(), similarityPtr.ptr).toInt()
-    if (ret != HSUCCEED) {
-      FaceManager.log { "faceCompare HFFaceComparison failed $ret" }
-      return 0f
-    }
 
-    similarityPtr.value
+    if (ret == HSUCCEED) {
+      similarityPtr.value
+    } else {
+      FaceManager.log { "faceCompare HFFaceComparison failed $ret" }
+      0f
+    }
   }
 }
 
