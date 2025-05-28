@@ -36,8 +36,7 @@ kotlin {
 
   sourceSets {
     commonMain.dependencies {
-      implementation(compose.material3)
-      implementation(compose.components.resources)
+      implementation(compose.foundation)
     }
     androidMain.dependencies {
       implementation(libs.camera.camera2)
@@ -49,10 +48,6 @@ kotlin {
       implementation(libs.kmp.kotlin.test)
     }
   }
-}
-
-compose.resources {
-  packageOfResClass = "com.sd.lib.kmp.compose_face.generated.resources"
 }
 
 android {
