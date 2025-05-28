@@ -161,6 +161,8 @@ internal class FaceInfoDetector {
       return BitmapFaceImage(crop = crop, src = src)
     }
 
-    override fun close() = Unit
+    override fun close() {
+      src.recycle()
+    }
   }
 }

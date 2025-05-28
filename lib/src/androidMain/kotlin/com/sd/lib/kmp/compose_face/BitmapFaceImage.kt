@@ -6,7 +6,7 @@ class BitmapFaceImage(
   val src: Bitmap,
   val crop: Bitmap?,
 ) : FaceImage {
-  override fun release() {
+  override fun close() {
     src.recycle()
     crop?.recycle()
   }

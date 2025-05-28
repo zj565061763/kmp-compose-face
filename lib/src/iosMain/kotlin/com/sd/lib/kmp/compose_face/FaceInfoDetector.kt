@@ -325,7 +325,7 @@ internal class FaceInfoDetector {
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
       return object : FaceImage {
-        override fun release() {
+        override fun close() {
           // TODO release
         }
       }
