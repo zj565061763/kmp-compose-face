@@ -25,7 +25,7 @@ private class PermissionUtilsImpl(
   private val context: Context,
 ) : PermissionUtils {
   private lateinit var _launcher: ManagedActivityResultLauncher<Array<String>, Map<String, Boolean>>
-  private var _hasPermissions by mutableStateOf(hasPermission(context))
+  private var _hasPermissions by mutableStateOf(hasPermissions(context))
 
   override val hasPermissions: Boolean get() = _hasPermissions
 
@@ -35,7 +35,7 @@ private class PermissionUtilsImpl(
       _hasPermissions = it.all { it.value }
     }
     LifecycleResumeEffect(Unit) {
-      _hasPermissions = hasPermission(context)
+      _hasPermissions = hasPermissions(context)
       onPauseOrDispose { }
     }
   }
@@ -47,7 +47,7 @@ private class PermissionUtilsImpl(
 
 private val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
 
-private fun hasPermission(context: Context): Boolean {
+private fun hasPermissions(context: Context): Boolean {
   return PERMISSIONS_REQUIRED.all {
     ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
   }
