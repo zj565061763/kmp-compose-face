@@ -1,4 +1,4 @@
-package com.sd.demo.kmp.compose_face
+package com.sd.demo.kmp.compose_face.platform
 
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable

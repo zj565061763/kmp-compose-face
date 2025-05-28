@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.sd.demo.kmp.compose_face.platform.FaceImageView
 import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceViewModel

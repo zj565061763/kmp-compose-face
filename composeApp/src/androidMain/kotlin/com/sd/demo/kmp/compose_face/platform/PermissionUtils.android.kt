@@ -1,4 +1,4 @@
-package com.sd.demo.kmp.compose_face
+package com.sd.demo.kmp.compose_face.platform
 
 import android.Manifest
 import android.content.Context
