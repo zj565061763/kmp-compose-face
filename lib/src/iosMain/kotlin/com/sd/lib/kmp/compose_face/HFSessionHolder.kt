@@ -45,8 +45,8 @@ internal class HFSessionHolder : AutoCloseable {
     val session = sessionPtr.value.also { _session = it }
     if (session != null) {
       HFSessionSetTrackPreviewSize(session, 320)
-      HFSessionSetFilterMinimumFacePixelSize(session, 0)
       HFSessionSetFaceDetectThreshold(session, 0.5f)
+      HFSessionSetFilterMinimumFacePixelSize(session, 0)
     }
   }
 

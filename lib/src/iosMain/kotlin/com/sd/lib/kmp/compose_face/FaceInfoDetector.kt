@@ -55,6 +55,7 @@ internal class FaceInfoDetector {
     val session = (_sessionHolder ?: HFSessionHolder().also { _sessionHolder = it }).get()
     if (session == null) {
       FaceManager.log { "detect session is null" }
+      release()
       return ErrorGetFaceInfo()
     }
     return memScoped { detect(buffer, session) }
