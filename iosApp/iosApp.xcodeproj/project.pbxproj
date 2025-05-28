@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		708135882DE7535A00188347 /* CoreML.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 708135872DE7535A00188347 /* CoreML.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		70082C412D34AE9B002546CB /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		708135872DE7535A00188347 /* CoreML.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreML.framework; path = System/Library/Frameworks/CoreML.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				708135882DE7535A00188347 /* CoreML.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +52,7 @@
 			isa = PBXGroup;
 			children = (
 				70082C432D34AE9B002546CB /* iosApp */,
+				708135862DE7535A00188347 /* Frameworks */,
 				70082C422D34AE9B002546CB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -56,6 +63,14 @@
 				70082C412D34AE9B002546CB /* iosApp.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		708135862DE7535A00188347 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				708135872DE7535A00188347 /* CoreML.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -286,6 +301,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
+				DEVELOPMENT_TEAM = C6BQ6LSMQ9;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
