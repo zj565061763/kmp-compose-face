@@ -68,6 +68,7 @@ internal class FaceInfoDetector {
     session: HFSession,
     imageDataHolder: HFImageBitmapDataHolder,
   ): FaceInfo {
+    // HFImageBitmapData
     val imageData = imageDataHolder.get()
     if (imageData == null) {
       FaceManager.log { "detect imageData is null" }
@@ -83,32 +84,38 @@ internal class FaceInfoDetector {
     }
 
     // HFImageBitmap
-    val imageBitmap = alloc<CPointerVarOf<HFImageBitmap>>().ptr
-    run {
+    val imageBitmap = run {
+      val imageBitmapPtr = alloc<CPointerVarOf<HFImageBitmap>>()
       HFCreateImageBitmap(
         data = imageData.ptr,
-        handle = imageBitmap,
+        handle = imageBitmapPtr.ptr,
       ).toInt().also { ret ->
         if (ret != HSUCCEED) {
           FaceManager.log { "detect HFCreateImageBitmap failed $ret" }
           return ErrorGetFaceInfo()
         }
       }
+      imageBitmapPtr.value
+    } ?: return ErrorGetFaceInfo().also {
+      FaceManager.log { "detect HFCreateImageBitmap value is null" }
     }
 
     // HFImageStream
-    val imageStream = alloc<CPointerVarOf<HFImageStream>>().ptr
-    run {
+    val imageStream = run {
+      val imageStreamPtr = alloc<CPointerVarOf<HFImageStream>>()
       HFCreateImageStreamFromImageBitmap(
         handle = imageBitmap,
         rotation = HF_CAMERA_ROTATION_0,
-        streamHandle = imageStream,
+        streamHandle = imageStreamPtr.ptr,
       ).toInt().also { ret ->
         if (ret != HSUCCEED) {
           FaceManager.log { "detect HFCreateImageStreamFromImageBitmap failed $ret" }
           return ErrorGetFaceInfo()
         }
       }
+      imageStreamPtr.value
+    } ?: return ErrorGetFaceInfo().also {
+      FaceManager.log { "detect HFCreateImageStreamFromImageBitmap value is null" }
     }
 
     try {
