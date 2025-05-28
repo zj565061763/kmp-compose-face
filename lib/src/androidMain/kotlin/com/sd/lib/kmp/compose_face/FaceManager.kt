@@ -16,11 +16,6 @@ object FaceManager {
     log { "init:$_hasInit" }
   }
 
-  @JvmStatic
-  fun compare(a: FloatArray, b: FloatArray): Float {
-    return faceCompare(a, b)
-  }
-
   /** 释放，释放后需要重新调用[init]初始化，才可以继续使用SDK */
   @JvmStatic
   fun release() {

@@ -12,14 +12,27 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun RouteHome(
-  onClickSample: () -> Unit,
+  onClickRecord: () -> Unit,
+  onClickValidate: () -> Unit,
 ) {
+  val permissionUtils = rememberPermissionUtils()
   Scaffold { padding ->
     Column(
       modifier = Modifier.fillMaxSize().padding(padding),
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      Button(onClick = onClickSample) { Text(text = "Sample") }
+      if (permissionUtils.hasPermissions) {
+        Button(onClick = onClickRecord) {
+          Text(text = "录入")
+        }
+        Button(onClick = onClickValidate) {
+          Text(text = "验证")
+        }
+      } else {
+        Button(onClick = { permissionUtils.requestPermissions() }) {
+          Text(text = "申请权限")
+        }
+      }
     }
   }
 }

@@ -16,11 +16,17 @@ fun ComposeApp() {
     ) {
       composable<AppRoute.Home> {
         RouteHome(
-          onClickSample = { navController.navigate(AppRoute.Sample) },
+          onClickRecord = { navController.navigate(AppRoute.SampleRecord) },
+          onClickValidate = { navController.navigate(AppRoute.SampleValidate) },
         )
       }
-      composable<AppRoute.Sample> {
-        Sample(onClickBack = { navController.popBackStack() })
+
+      composable<AppRoute.SampleRecord> {
+        SampleRecord(onClickBack = { navController.popBackStack() })
+      }
+
+      composable<AppRoute.SampleValidate> {
+        SampleValidate(onClickBack = { navController.popBackStack() })
       }
     }
   }

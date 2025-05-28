@@ -26,14 +26,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".RecordActivity"
-            android:launchMode="singleTop" />
-
-        <activity
-            android:name=".ValidateActivity"
-            android:launchMode="singleTop" />
-
     </application>
 
 </manifest>

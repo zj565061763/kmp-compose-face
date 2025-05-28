@@ -7,5 +7,8 @@ sealed interface AppRoute {
   data object Home : AppRoute
 
   @Serializable
-  data object Sample : AppRoute
+  data object SampleRecord : AppRoute
+
+  @Serializable
+  data object SampleValidate : AppRoute
 }

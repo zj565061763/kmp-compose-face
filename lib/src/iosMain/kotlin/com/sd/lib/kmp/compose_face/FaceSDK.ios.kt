@@ -16,7 +16,7 @@ import kotlinx.cinterop.set
 import kotlinx.cinterop.value
 
 @OptIn(ExperimentalForeignApi::class)
-internal actual fun faceCompare(a: FloatArray, b: FloatArray): Float {
+actual fun faceCompare(a: FloatArray, b: FloatArray): Float {
   if (a.isEmpty() || b.isEmpty()) return 0f
   return memScoped {
     val fa = floatArrayToHFFaceFeature(a)
