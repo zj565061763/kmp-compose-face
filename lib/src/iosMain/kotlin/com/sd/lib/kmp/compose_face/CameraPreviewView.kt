@@ -1,6 +1,7 @@
 package com.sd.lib.kmp.compose_face
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,10 +40,13 @@ internal fun CameraPreviewView(
   val pv = previewView
   if (pv != null) {
     val previewLayer = remember { AVCaptureVideoPreviewLayer.layerWithSession(captureSession) }
-    LifecycleResumeEffect(pv) {
+    LaunchedEffect(pv) {
       previewLayer.frame = pv.bounds
       previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
+      previewLayer.removeFromSuperlayer()
       pv.layer.addSublayer(previewLayer)
+    }
+    LifecycleResumeEffect(pv) {
       captureSession.startRunning()
       onPauseOrDispose { captureSession.stopRunning() }
     }
