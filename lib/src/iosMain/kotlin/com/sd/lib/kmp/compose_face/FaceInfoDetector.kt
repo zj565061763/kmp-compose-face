@@ -11,6 +11,7 @@ import InspireFace.HFGetFaceInteractionActionsResult
 import InspireFace.HFGetFaceQualityConfidence
 import InspireFace.HFGetFeatureLength
 import InspireFace.HFImageBitmap
+import InspireFace.HFImageBitmapData
 import InspireFace.HFImageStream
 import InspireFace.HFMultipleFaceData
 import InspireFace.HFMultipleFacePipelineProcessOptional
@@ -28,13 +29,23 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.FloatVarOf
 import kotlinx.cinterop.IntVarOf
 import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readValue
+import kotlinx.cinterop.reinterpret
+import kotlinx.cinterop.set
 import kotlinx.cinterop.value
+import platform.CoreMedia.CMSampleBufferGetImageBuffer
 import platform.CoreMedia.CMSampleBufferRef
+import platform.CoreVideo.CVPixelBufferGetBaseAddress
+import platform.CoreVideo.CVPixelBufferGetHeight
+import platform.CoreVideo.CVPixelBufferGetWidth
+import platform.CoreVideo.CVPixelBufferLockBaseAddress
+import platform.CoreVideo.CVPixelBufferUnlockBaseAddress
 
 @OptIn(ExperimentalForeignApi::class)
 internal class FaceInfoDetector {
@@ -47,10 +58,17 @@ internal class FaceInfoDetector {
       release()
       return ErrorGetFaceInfo()
     }
+
+    val imageData = sampleBufferToBGRImageData(buffer)
+    if (imageData == null) {
+      FaceManager.log { "detect sampleBufferToBGRImageData returns null" }
+      return ErrorGetFaceInfo()
+    }
+
     return memScoped {
       detect(
         session = session,
-        imageDataHolder = HFImageBitmapDataHolder(buffer),
+        imageData = imageData,
       )
     }
   }
@@ -65,16 +83,8 @@ internal class FaceInfoDetector {
 
   private fun MemScope.detect(
     session: HFSession,
-    imageDataHolder: HFImageBitmapDataHolder,
+    imageData: BGRImageData,
   ): FaceInfo {
-    // HFImageBitmapData
-    val imageData = imageDataHolder.get()
-    if (imageData == null) {
-      FaceManager.log { "detect imageData is null" }
-      imageDataHolder.close()
-      return ErrorGetFaceInfo()
-    }
-
     val srcWidth = imageData.width
     val srcHeight = imageData.height
     if (srcWidth <= 0 || srcHeight <= 0) {
@@ -84,9 +94,10 @@ internal class FaceInfoDetector {
 
     // HFImageBitmap
     val imageBitmap = run {
+      val imageBitmapData = bgrImageDataToHFImageBitmapData(imageData)
       val imageBitmapPtr = alloc<CPointerVarOf<HFImageBitmap>>()
       HFCreateImageBitmap(
-        data = imageData.ptr,
+        data = imageBitmapData.ptr,
         handle = imageBitmapPtr.ptr,
       ).toInt().also { ret ->
         if (ret != HSUCCEED) {
@@ -121,7 +132,7 @@ internal class FaceInfoDetector {
       return detect(
         session = session,
         imageStream = imageStream,
-        imageDataHolder = imageDataHolder,
+        imageData = imageData,
       )
     } catch (e: Throwable) {
       e.printStackTrace()
@@ -135,23 +146,8 @@ internal class FaceInfoDetector {
   private fun MemScope.detect(
     session: HFSession,
     imageStream: HFImageStream,
-    imageDataHolder: HFImageBitmapDataHolder,
+    imageData: BGRImageData,
   ): FaceInfo {
-    // HFImageBitmapData
-    val imageData = imageDataHolder.get()
-    if (imageData == null) {
-      FaceManager.log { "detect imageData is null" }
-      imageDataHolder.close()
-      return ErrorGetFaceInfo()
-    }
-
-    val srcWidth = imageData.width
-    val srcHeight = imageData.height
-    if (srcWidth <= 0 || srcHeight <= 0) {
-      FaceManager.log { "detect src width or height <= 0" }
-      return ErrorGetFaceInfo()
-    }
-
     // HFMultipleFaceData
     val multipleFaceData = alloc<HFMultipleFaceData>()
     run {
@@ -313,7 +309,7 @@ internal class FaceInfoDetector {
       faceData = faceData,
       faceState = faceState,
       faceBounds = faceBounds,
-      imageDataHolder = imageDataHolder,
+      imageData = imageData,
     )
   }
 
@@ -321,15 +317,60 @@ internal class FaceInfoDetector {
     override val faceData: FloatArray,
     override val faceState: FaceState,
     override val faceBounds: FaceBounds,
-    private val imageDataHolder: HFImageBitmapDataHolder,
+    private val imageData: BGRImageData,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
-      return FaceImageWithUIImage(imageDataHolder = imageDataHolder)
+      return FaceImageWithUIImage(imageData = imageData)
+    }
+  }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun sampleBufferToBGRImageData(buffer: CMSampleBufferRef): BGRImageData? {
+  val imageBuffer = CMSampleBufferGetImageBuffer(buffer) ?: return null
+  try {
+    CVPixelBufferLockBaseAddress(imageBuffer, 0.toULong())
+    val baseAddress = CVPixelBufferGetBaseAddress(imageBuffer)?.reinterpret<UByteVar>() ?: return null
+
+    val width = CVPixelBufferGetWidth(imageBuffer).toInt()
+    val height = CVPixelBufferGetHeight(imageBuffer).toInt()
+
+    val pixelCount = width * height
+    val data = UByteArray(pixelCount * 3)
+
+    var m = 0
+    var n = 0
+    repeat(pixelCount) {
+      data[m++] = baseAddress[n++] // B
+      data[m++] = baseAddress[n++] // G
+      data[m++] = baseAddress[n++] // R
+      n++ // skip Alpha
     }
 
-    override fun close() {
-      imageDataHolder.close()
-    }
+    return BGRImageData(
+      width = width,
+      height = height,
+      data = data,
+    )
+  } catch (e: Throwable) {
+    FaceManager.log { "sampleBufferToBGRImageData error $e" }
+    return null
+  } finally {
+    CVPixelBufferUnlockBaseAddress(imageBuffer, 0.toULong())
+  }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+private fun MemScope.bgrImageDataToHFImageBitmapData(imageData: BGRImageData): HFImageBitmapData {
+  val dataPtr = allocArray<UByteVar>(imageData.data.size)
+  for (i in imageData.data.indices) {
+    dataPtr[i] = imageData.data[i]
+  }
+  return alloc<HFImageBitmapData>().apply {
+    this.width = imageData.width
+    this.height = imageData.height
+    this.channels = imageData.channels
+    this.data = dataPtr
   }
 }
 

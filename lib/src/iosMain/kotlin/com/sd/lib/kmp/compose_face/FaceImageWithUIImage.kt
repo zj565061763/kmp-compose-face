@@ -1,10 +1,8 @@
 package com.sd.lib.kmp.compose_face
 
 class FaceImageWithUIImage internal constructor(
-  private val imageDataHolder: HFImageBitmapDataHolder,
+  private val imageData: BGRImageData,
 ) : FaceImage {
 
-  override fun close() {
-    imageDataHolder.close()
-  }
+  override fun close() = Unit
 }
