@@ -24,8 +24,13 @@ internal fun CameraPreviewView(
   val onDataUpdated by rememberUpdatedState(onData)
 
   val captureSession = remember {
-    createAVCaptureSession { buffer ->
-      onDataUpdated(buffer)
+    runCatching {
+      createAVCaptureSession { buffer ->
+        onDataUpdated(buffer)
+      }
+    }.getOrElse {
+      FaceManager.log { "createAVCaptureSession error $it" }
+      null
     }
   } ?: return
 

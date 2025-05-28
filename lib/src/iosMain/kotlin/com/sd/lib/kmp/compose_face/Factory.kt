@@ -24,8 +24,8 @@ import platform.darwin.dispatch_get_main_queue
 @OptIn(ExperimentalForeignApi::class)
 internal fun createAVCaptureSession(
   onCMSampleBufferRef: (CMSampleBufferRef) -> Unit,
-): AVCaptureSession? {
-  val input = createAVCaptureDeviceInput() ?: return null
+): AVCaptureSession {
+  val input = createAVCaptureDeviceInput()
   val output = createAVCaptureVideoDataOutput(onCMSampleBufferRef = onCMSampleBufferRef)
   return AVCaptureSession().apply {
     sessionPreset = AVCaptureSessionPreset640x480
@@ -35,17 +35,16 @@ internal fun createAVCaptureSession(
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun createAVCaptureDeviceInput(): AVCaptureDeviceInput? {
+private fun createAVCaptureDeviceInput(): AVCaptureDeviceInput {
   val device = AVCaptureDevice.defaultDeviceWithDeviceType(
     deviceType = AVCaptureDeviceTypeBuiltInWideAngleCamera,
     mediaType = AVMediaTypeVideo,
     position = AVCaptureDevicePositionFront,
-  ) ?: return null
-
+  )!!
   return AVCaptureDeviceInput.deviceInputWithDevice(
     device = device,
     error = null,
-  )
+  )!!
 }
 
 @OptIn(ExperimentalForeignApi::class)
