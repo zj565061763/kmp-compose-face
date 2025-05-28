@@ -2,7 +2,6 @@ package com.sd.lib.kmp.compose_face
 
 import android.graphics.Bitmap
 import com.insightface.sdk.inspireface.InspireFace
-import com.insightface.sdk.inspireface.base.FaceBasicToken
 import com.insightface.sdk.inspireface.base.ImageStream
 import com.insightface.sdk.inspireface.base.Session
 
@@ -122,9 +121,6 @@ internal class FaceInfoDetector {
       faceState = faceState,
       faceBounds = faceBounds,
       src = src,
-      session = session,
-      stream = stream,
-      token = token,
     )
   }
 
@@ -147,18 +143,9 @@ internal class FaceInfoDetector {
     override val faceState: FaceState,
     override val faceBounds: FaceBounds,
     private val src: Bitmap,
-    private val session: Session,
-    private val stream: ImageStream,
-    private val token: FaceBasicToken,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
-      val crop = runCatching {
-        InspireFace.GetFaceAlignmentImage(session, stream, token)
-      }.getOrElse {
-        FaceManager.log { "getFaceImage error:$it" }
-        null
-      }
-      return BitmapFaceImage(crop = crop, src = src)
+      return BitmapFaceImage(src = src)
     }
 
     override fun close() {
