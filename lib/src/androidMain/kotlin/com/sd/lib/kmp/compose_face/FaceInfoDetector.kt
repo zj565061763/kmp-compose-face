@@ -13,8 +13,8 @@ internal class FaceInfoDetector {
   private var _session: Session? = null
   private val _facePipelineParams = InspireFace.CreateCustomParameter()
     .enableFaceQuality(true)
-    .enableLiveness(true)
     .enableInteractionLiveness(true)
+    .enableLiveness(true)
 
   /** 检测[bitmap]中的人脸信息 */
   fun detect(bitmap: Bitmap): FaceInfo {
@@ -118,13 +118,13 @@ internal class FaceInfoDetector {
     FaceManager.log { "detect faceQuality${faceQuality} faceScale:${faceBounds.faceWidthScale} blink:$blink shake:$shake mouthOpen:$mouthOpen raiseHead:$raiseHead" }
 
     return SDKFaceInfo(
-      session = session,
-      stream = stream,
-      src = src,
-      token = token,
       faceData = faceData,
       faceState = faceState,
       faceBounds = faceBounds,
+      src = src,
+      session = session,
+      stream = stream,
+      token = token,
     )
   }
 
@@ -143,13 +143,13 @@ internal class FaceInfoDetector {
   }
 
   private class SDKFaceInfo(
-    private val session: Session,
-    private val stream: ImageStream,
-    private val src: Bitmap,
-    private val token: FaceBasicToken,
     override val faceData: FloatArray,
     override val faceState: FaceState,
     override val faceBounds: FaceBounds,
+    private val src: Bitmap,
+    private val session: Session,
+    private val stream: ImageStream,
+    private val token: FaceBasicToken,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
       val crop = runCatching {
