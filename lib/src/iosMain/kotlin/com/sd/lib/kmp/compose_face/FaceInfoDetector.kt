@@ -56,7 +56,7 @@ import platform.CoreVideo.CVPixelBufferGetWidth
 import platform.CoreVideo.CVPixelBufferLockBaseAddress
 
 @OptIn(ExperimentalForeignApi::class)
-class FaceInfoDetector {
+internal class FaceInfoDetector {
   private var _session: HFSession? = null
 
   fun detect(buffer: CMSampleBufferRef): FaceInfo {
