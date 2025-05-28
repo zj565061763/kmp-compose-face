@@ -11,7 +11,6 @@ import InspireFace.HFGetFaceInteractionActionsResult
 import InspireFace.HFGetFaceQualityConfidence
 import InspireFace.HFGetFeatureLength
 import InspireFace.HFImageBitmap
-import InspireFace.HFImageBitmapData
 import InspireFace.HFImageStream
 import InspireFace.HFMultipleFaceData
 import InspireFace.HFMultipleFacePipelineProcessOptional
@@ -122,7 +121,7 @@ internal class FaceInfoDetector {
       return detect(
         session = session,
         imageStream = imageStream,
-        imageData = imageData,
+        imageDataHolder = imageDataHolder,
       )
     } catch (e: Throwable) {
       e.printStackTrace()
@@ -136,8 +135,23 @@ internal class FaceInfoDetector {
   private fun MemScope.detect(
     session: HFSession,
     imageStream: HFImageStream,
-    imageData: HFImageBitmapData,
+    imageDataHolder: HFImageBitmapDataHolder,
   ): FaceInfo {
+    // HFImageBitmapData
+    val imageData = imageDataHolder.get()
+    if (imageData == null) {
+      FaceManager.log { "detect imageData is null" }
+      imageDataHolder.close()
+      return ErrorGetFaceInfo()
+    }
+
+    val srcWidth = imageData.width
+    val srcHeight = imageData.height
+    if (srcWidth <= 0 || srcHeight <= 0) {
+      FaceManager.log { "detect src width or height <= 0" }
+      return ErrorGetFaceInfo()
+    }
+
     // HFMultipleFaceData
     val multipleFaceData = alloc<HFMultipleFaceData>()
     run {
@@ -185,19 +199,19 @@ internal class FaceInfoDetector {
     }
 
     // HFGetFeatureLength
-    val featureLengthVar = alloc<IntVarOf<Int>>()
-    run {
-      val ret = HFGetFeatureLength(featureLengthVar.ptr).toInt()
+    val featureLength = run {
+      val featureLengthPtr = alloc<IntVarOf<Int>>()
+      val ret = HFGetFeatureLength(featureLengthPtr.ptr).toInt()
       if (ret != HSUCCEED) {
         FaceManager.log { "detect HFGetFeatureLength failed $ret" }
         return ErrorGetFaceInfo()
       }
-    }
-
-    val featureLength = featureLengthVar.value
-    if (featureLength <= 0) {
-      FaceManager.log { "detect HFGetFeatureLength <= 0 $featureLength" }
-      return ErrorGetFaceInfo()
+      featureLengthPtr.value
+    }.also {
+      if (it <= 0) {
+        FaceManager.log { "detect HFGetFeatureLength <= 0 $it" }
+        return ErrorGetFaceInfo()
+      }
     }
 
     val faceData = faceFeature.data.toFloatArray(featureLength)
@@ -212,7 +226,7 @@ internal class FaceInfoDetector {
         session = session,
         streamHandle = imageStream,
         faces = multipleFaceData.ptr,
-        customOption = HF_ENABLE_QUALITY or HF_ENABLE_LIVENESS or HF_ENABLE_INTERACTION,
+        customOption = HF_ENABLE_QUALITY or HF_ENABLE_INTERACTION or HF_ENABLE_LIVENESS,
       ).toInt().also { ret ->
         if (ret != HSUCCEED) {
           FaceManager.log { "detect HFMultipleFacePipelineProcessOptional failed $ret" }
@@ -237,7 +251,7 @@ internal class FaceInfoDetector {
 
     val faceQuality = faceQualityConfidence.confidence.toFloatArray(1)?.firstOrNull()
     if (faceQuality == null) {
-      FaceManager.log { "detect faceQualityConfidence is null" }
+      FaceManager.log { "detect faceQuality is null" }
       return ErrorGetFaceInfo()
     }
 
@@ -299,6 +313,7 @@ internal class FaceInfoDetector {
       faceData = faceData,
       faceState = faceState,
       faceBounds = faceBounds,
+      imageDataHolder = imageDataHolder,
     )
   }
 
@@ -306,6 +321,7 @@ internal class FaceInfoDetector {
     override val faceData: FloatArray,
     override val faceState: FaceState,
     override val faceBounds: FaceBounds,
+    private val imageDataHolder: HFImageBitmapDataHolder,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
       return object : FaceImage {
@@ -316,7 +332,7 @@ internal class FaceInfoDetector {
     }
 
     override fun close() {
-      // TODO
+      imageDataHolder.close()
     }
   }
 }
