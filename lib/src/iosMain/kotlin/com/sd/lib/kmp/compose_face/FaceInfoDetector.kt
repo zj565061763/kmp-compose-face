@@ -2,8 +2,6 @@ package com.sd.lib.kmp.compose_face
 
 import InspireFace.HFCreateImageBitmap
 import InspireFace.HFCreateImageStreamFromImageBitmap
-import InspireFace.HFCreateInspireFaceSessionOptional
-import InspireFace.HFDetectMode
 import InspireFace.HFExecuteFaceTrack
 import InspireFace.HFFaceFeature
 import InspireFace.HFFaceFeatureExtract
@@ -19,13 +17,8 @@ import InspireFace.HFMultipleFaceData
 import InspireFace.HFMultipleFacePipelineProcessOptional
 import InspireFace.HFReleaseImageBitmap
 import InspireFace.HFReleaseImageStream
-import InspireFace.HFReleaseInspireFaceSession
 import InspireFace.HFSession
-import InspireFace.HFSessionSetFaceDetectThreshold
-import InspireFace.HFSessionSetFilterMinimumFacePixelSize
-import InspireFace.HFSessionSetTrackPreviewSize
 import InspireFace.HF_CAMERA_ROTATION_0
-import InspireFace.HF_ENABLE_FACE_RECOGNITION
 import InspireFace.HF_ENABLE_INTERACTION
 import InspireFace.HF_ENABLE_LIVENESS
 import InspireFace.HF_ENABLE_QUALITY
@@ -42,7 +35,6 @@ import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.reinterpret
@@ -57,10 +49,10 @@ import platform.CoreVideo.CVPixelBufferLockBaseAddress
 
 @OptIn(ExperimentalForeignApi::class)
 internal class FaceInfoDetector {
-  private var _session: HFSession? = null
+  private var _sessionHolder: HFSessionHolder? = null
 
   fun detect(buffer: CMSampleBufferRef): FaceInfo {
-    val session = _session ?: newSession().also { _session = it }
+    val session = (_sessionHolder ?: HFSessionHolder().also { _sessionHolder = it }).get()
     if (session == null) {
       FaceManager.log { "detect session is null" }
       return ErrorGetFaceInfo()
@@ -70,9 +62,9 @@ internal class FaceInfoDetector {
 
   /** 不需要检测时，释放 */
   fun release() {
-    _session?.also {
-      _session = null
-      HFReleaseInspireFaceSession(it)
+    _sessionHolder?.also {
+      _sessionHolder = null
+      it.close()
     }
   }
 
@@ -305,31 +297,6 @@ internal class FaceInfoDetector {
       faceState = faceState,
       faceBounds = faceBounds,
     )
-  }
-
-  private fun newSession(): HFSession? {
-    val customOption = HF_ENABLE_FACE_RECOGNITION or HF_ENABLE_QUALITY or HF_ENABLE_INTERACTION or HF_ENABLE_LIVENESS
-    val detectPixelLevel = 320
-    val session = nativeHeap.alloc<CPointerVarOf<HFSession>>().ptr
-
-    val ret = HFCreateInspireFaceSessionOptional(
-      customOption = customOption,
-      detectMode = HFDetectMode.HF_DETECT_MODE_LIGHT_TRACK,
-      maxDetectFaceNum = 2,
-      detectPixelLevel = detectPixelLevel,
-      trackByDetectModeFPS = 16,
-      handle = session,
-    ).toInt()
-
-    if (ret != HSUCCEED) {
-      nativeHeap.free(session.rawValue)
-      return null
-    }
-
-    HFSessionSetTrackPreviewSize(session, detectPixelLevel)
-    HFSessionSetFilterMinimumFacePixelSize(session, 0)
-    HFSessionSetFaceDetectThreshold(session, 0.5f)
-    return session
   }
 
   private class SDKFaceInfo(
