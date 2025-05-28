@@ -20,14 +20,19 @@ import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceViewModel
 import com.sd.lib.kmp.compose_face.faceCompare
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+/**
+ * 验证
+ */
 @Composable
 fun SampleValidate(
   onClickBack: () -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
   val snackbarHostState = remember { SnackbarHostState() }
+  var showSnackbarJob by remember { mutableStateOf<Job?>(null) }
 
   var faceImage by remember { mutableStateOf<FaceImage?>(null) }
 
@@ -43,7 +48,8 @@ fun SampleValidate(
         val similarity = faceCompare(savedFace, resultFace)
         logMsg { "similarity:${similarity}" }
 
-        coroutineScope.launch {
+        showSnackbarJob?.cancel()
+        showSnackbarJob = coroutineScope.launch {
           val text = if (similarity > 0.8f) "验证成功" else "验证失败"
           snackbarHostState.showSnackbar(text)
         }
@@ -61,6 +67,7 @@ fun SampleValidate(
       SuccessContent(
         faceImage = image,
         onClickValidate = {
+          showSnackbarJob?.cancel()
           faceImage = null
           vm.restart()
         },

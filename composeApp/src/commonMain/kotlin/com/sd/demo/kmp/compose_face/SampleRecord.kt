@@ -18,6 +18,9 @@ import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceViewModel
 
+/**
+ * 录入
+ */
 @Composable
 fun SampleRecord(
   onClickBack: () -> Unit,
