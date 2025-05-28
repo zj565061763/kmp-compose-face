@@ -5,6 +5,7 @@ import InspireFace.HFTerminateInspireFace
 import InspireFace.HSUCCEED
 import com.sd.lib.kmp.compose_face.FaceManager.init
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.Foundation.NSBundle
 
 @OptIn(ExperimentalForeignApi::class)
 object FaceManager {
@@ -13,7 +14,8 @@ object FaceManager {
   /** 初始化 */
   fun init(modelPath: String = "Pikachu") {
     if (_hasInit) return
-    val ret = HFLaunchInspireFace(modelPath).toInt()
+    val path = NSBundle.mainBundle.pathForResource(name = modelPath, ofType = null)
+    val ret = HFLaunchInspireFace(path).toInt()
     _hasInit = ret == HSUCCEED
     log { "init:$_hasInit" }
   }
