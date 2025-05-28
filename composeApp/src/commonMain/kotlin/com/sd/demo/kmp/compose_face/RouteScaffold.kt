@@ -25,11 +25,13 @@ fun RouteScaffold(
   onClickBack: () -> Unit,
   isLight: Boolean = true,
   contentPadding: PaddingValues = PaddingValues(),
+  snackbarHost: @Composable () -> Unit = {},
   content: @Composable ColumnScope.() -> Unit,
 ) {
   AppTheme(isLight = isLight) {
     Scaffold(
       modifier = modifier.fillMaxSize(),
+      snackbarHost = snackbarHost,
       topBar = {
         TopAppBar(
           title = { Text(text = title) },

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,12 +20,15 @@ import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceViewModel
 import com.sd.lib.kmp.compose_face.faceCompare
+import kotlinx.coroutines.launch
 
 @Composable
 fun SampleValidate(
   onClickBack: () -> Unit,
 ) {
   val coroutineScope = rememberCoroutineScope()
+  val snackbarHostState = remember { SnackbarHostState() }
+
   var faceImage by remember { mutableStateOf<FaceImage?>(null) }
 
   val vm = remember {
@@ -32,10 +37,16 @@ fun SampleValidate(
       getInteractionTypes = { listOf(FaceInteractionType.entries.random()) },
       onSuccess = { result ->
         faceImage = result.image
+
         val savedFace = ComposeApp.faceData
         val resultFace = result.data
         val similarity = faceCompare(savedFace, resultFace)
         logMsg { "similarity:${similarity}" }
+
+        coroutineScope.launch {
+          val text = if (similarity > 0.8f) "验证成功" else "验证失败"
+          snackbarHostState.showSnackbar(text)
+        }
       },
     )
   }
@@ -43,6 +54,7 @@ fun SampleValidate(
   RouteScaffold(
     title = "验证",
     onClickBack = onClickBack,
+    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
   ) {
     val image = faceImage
     if (image != null) {

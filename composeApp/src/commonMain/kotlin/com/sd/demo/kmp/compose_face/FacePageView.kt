@@ -87,7 +87,7 @@ fun FacePageView(
       modifier = Modifier
         .size(200.dp)
         .clip(CircleShape)
-        .background(Color.Red),
+        .background(Color.Black),
       vm = vm,
     )
   }
