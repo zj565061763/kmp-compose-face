@@ -324,11 +324,7 @@ internal class FaceInfoDetector {
     private val imageDataHolder: HFImageBitmapDataHolder,
   ) : ValidFaceInfo {
     override fun getFaceImage(): FaceImage {
-      return object : FaceImage {
-        override fun close() {
-          // TODO release
-        }
-      }
+      return FaceImageWithUIImage(imageDataHolder = imageDataHolder)
     }
 
     override fun close() {
