@@ -44,9 +44,6 @@ kotlin {
       implementation(libs.camera.view)
       implementation(libs.inspireface.android)
     }
-    commonTest.dependencies {
-      implementation(libs.kmp.kotlin.test)
-    }
   }
 }
 
