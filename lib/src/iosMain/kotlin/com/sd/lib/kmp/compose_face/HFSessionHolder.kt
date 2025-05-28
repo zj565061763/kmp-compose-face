@@ -37,6 +37,7 @@ internal class HFSessionHolder {
       handle = sessionPtr.ptr,
     ).toInt().also { ret ->
       if (ret != HSUCCEED) {
+        FaceManager.log { "HFSessionHolder init HFCreateInspireFaceSessionOptional failed ret:$ret" }
         close()
         return
       }
@@ -44,6 +45,7 @@ internal class HFSessionHolder {
 
     val session = sessionPtr.value.also { _session = it }
     if (session == null) {
+      FaceManager.log { "HFSessionHolder init session is null" }
       close()
       return
     }
@@ -56,11 +58,13 @@ internal class HFSessionHolder {
   fun close() {
     _session?.also {
       _session = null
-      HFReleaseInspireFaceSession(it)
+      val ret = HFReleaseInspireFaceSession(it).toInt()
+      if (ret != HSUCCEED) FaceManager.log { "HFSessionHolder HFReleaseInspireFaceSession failed ret:$ret" }
     }
     _sessionPtr?.also {
       _sessionPtr = null
-      nativeHeap.free(it.rawPtr)
+      runCatching { nativeHeap.free(it.rawPtr) }
+        .onFailure { e -> FaceManager.log { "HFSessionHolder free _sessionPtr error $e" } }
     }
   }
 
