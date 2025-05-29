@@ -120,7 +120,7 @@ class FaceViewModel(
     faceInfo: ValidFaceInfo,
     state: State,
   ) {
-    if (!_faceInfoChecker.check(state)) return
+    if (!_faceInfoChecker.check(state, targetCount = 2)) return
 
     val checkedFaceData = faceInfo.faceData
     val checkedFaceImage = faceInfo.getFaceImage()
@@ -162,7 +162,7 @@ class FaceViewModel(
       return
     }
 
-    if (!_faceInfoChecker.check(state, targetCount = 1)) return
+    if (!_faceInfoChecker.check(state)) return
 
     when (stage.interactionStage) {
       FaceInteractionStage.Interacting -> {
@@ -336,7 +336,7 @@ class FaceViewModel(
 
     fun check(
       state: State,
-      targetCount: Int = 10,
+      targetCount: Int = 1,
     ): Boolean {
       require(targetCount > 0)
       if (state.checkInvalidType() != null) _count = 0 else _count++
