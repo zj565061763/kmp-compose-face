@@ -351,24 +351,17 @@ class FaceViewModel(
   private fun State.checkInvalidType(): InvalidType? {
     return when (stage) {
       is Stage.Preparing -> checkInvalidTypeWithParams()
-      is Stage.Interacting -> checkInvalidTypeWithParams(checkEyes = false, checkFaceInteraction = false)
+      is Stage.Interacting -> checkInvalidTypeWithParams(checkFaceInteraction = false)
       else -> null
     }
   }
 
   private fun State.checkInvalidTypeWithParams(
-    checkEyes: Boolean = true,
     checkFaceInteraction: Boolean = true,
   ): InvalidType? {
     // 检查人脸数量
     if (faceCount <= 0) return InvalidType.NoFace
     if (faceCount > 1) return InvalidType.MultiFace
-
-    // 检查双眼是否睁开
-    if (checkEyes) {
-      if (faceState.leftEyeOpen == false) return InvalidType.LowFaceQuality
-      if (faceState.rightEyeOpen == false) return InvalidType.LowFaceQuality
-    }
 
     // 检查人脸质量是否太低
     if (faceState.faceQuality < getMinFaceQuality(stage)) return InvalidType.LowFaceQuality

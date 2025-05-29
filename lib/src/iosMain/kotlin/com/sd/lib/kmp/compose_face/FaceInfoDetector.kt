@@ -289,8 +289,6 @@ internal class FaceInfoDetector {
 
     val faceState = FaceState(
       faceQuality = faceQuality,
-      leftEyeOpen = true,
-      rightEyeOpen = true,
       blink = blink > 0,
       shake = shake > 0,
       mouthOpen = jawOpen > 0,

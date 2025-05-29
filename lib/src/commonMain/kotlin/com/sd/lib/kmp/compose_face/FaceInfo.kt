@@ -33,11 +33,6 @@ data class FaceState(
   /** 脸部质量[0-1] */
   val faceQuality: Float,
 
-  /** 左眼是否睁开 */
-  val leftEyeOpen: Boolean,
-  /** 右眼是否睁开 */
-  val rightEyeOpen: Boolean,
-
   /** 是否眨眼 */
   val blink: Boolean,
   /** 是否摇头 */
@@ -52,8 +47,6 @@ data class FaceState(
   companion object {
     val Empty = FaceState(
       faceQuality = 0f,
-      leftEyeOpen = false,
-      rightEyeOpen = false,
       blink = false,
       shake = false,
       mouthOpen = false,
