@@ -41,7 +41,7 @@ internal fun createAVCaptureSession(
       if (supportsVideoMirroring) videoMirrored = true
     }
 
-    output.onCMSampleBufferRef(onCMSampleBufferRef)
+    output.setCallback(onCMSampleBufferRef)
   }
 }
 
@@ -69,13 +69,13 @@ private fun createAVCaptureVideoDataOutput(): AVCaptureVideoDataOutput {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun AVCaptureVideoDataOutput.onCMSampleBufferRef(
+private fun AVCaptureVideoDataOutput.setCallback(
   onCMSampleBufferRef: (CMSampleBufferRef) -> Unit,
 ) {
   val delegate = object : NSObject(), AVCaptureVideoDataOutputSampleBufferDelegateProtocol {
-    override fun captureOutput(output: AVCaptureOutput, didDropSampleBuffer: CMSampleBufferRef?, fromConnection: AVCaptureConnection) {
-      if (didDropSampleBuffer != null) {
-        onCMSampleBufferRef(didDropSampleBuffer)
+    override fun captureOutput(output: AVCaptureOutput, didOutputSampleBuffer: CMSampleBufferRef?, fromConnection: AVCaptureConnection) {
+      if (didOutputSampleBuffer != null) {
+        onCMSampleBufferRef(didOutputSampleBuffer)
       }
     }
   }
