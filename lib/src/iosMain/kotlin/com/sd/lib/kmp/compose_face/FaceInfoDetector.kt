@@ -76,6 +76,7 @@ internal class FaceInfoDetector {
   /** 不需要检测时，释放 */
   fun release() {
     _sessionHolder?.also {
+      FaceManager.log { "detect release" }
       _sessionHolder = null
       it.close()
     }
