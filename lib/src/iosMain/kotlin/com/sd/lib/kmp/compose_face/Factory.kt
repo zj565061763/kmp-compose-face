@@ -20,8 +20,9 @@ import platform.CoreMedia.CMSampleBufferRef
 import platform.CoreVideo.kCVPixelBufferPixelFormatTypeKey
 import platform.CoreVideo.kCVPixelFormatType_32BGRA
 import platform.Foundation.NSString
+import platform.darwin.DISPATCH_QUEUE_SERIAL
 import platform.darwin.NSObject
-import platform.darwin.dispatch_get_main_queue
+import platform.darwin.dispatch_queue_create
 
 @OptIn(ExperimentalForeignApi::class)
 internal fun createAVCaptureSession(
@@ -79,5 +80,7 @@ private fun AVCaptureVideoDataOutput.setCallback(
       }
     }
   }
-  setSampleBufferDelegate(delegate, dispatch_get_main_queue())
+
+  val queue = dispatch_queue_create("VideoDataOutputQueue", DISPATCH_QUEUE_SERIAL as? NSObject)
+  setSampleBufferDelegate(delegate, queue)
 }
