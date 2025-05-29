@@ -36,7 +36,7 @@ fun SampleRecord(
       onSuccess = { result ->
         faceImage = result.image
         ComposeApp.faceData = result.data
-        println("onSuccess size:${result.data}")
+        logMsg { "onSuccess size:${result.data}" }
       },
     )
   }
