@@ -27,20 +27,21 @@ import platform.darwin.dispatch_get_main_queue
 internal fun createAVCaptureSession(
   onCMSampleBufferRef: (CMSampleBufferRef) -> Unit,
 ): AVCaptureSession {
-  val input = createAVCaptureDeviceInput()
-  val output = createAVCaptureVideoDataOutput()
   return AVCaptureSession().apply {
+    val input = createAVCaptureDeviceInput()
     addInput(input)
-    sessionPreset = AVCaptureSessionPreset640x480
+    setSessionPreset(AVCaptureSessionPreset640x480)
+
+    val output = createAVCaptureVideoDataOutput()
     addOutput(output)
-    output.apply {
-      connectionWithMediaType(AVMediaTypeVideo)!!.apply {
-        videoOrientation = AVCaptureVideoOrientationPortrait
-        setPreferredVideoStabilizationMode(AVCaptureVideoStabilizationModeStandard)
-        if (supportsVideoMirroring) videoMirrored = true
-      }
-      onCMSampleBufferRef(onCMSampleBufferRef)
+
+    output.connectionWithMediaType(AVMediaTypeVideo)!!.apply {
+      videoOrientation = AVCaptureVideoOrientationPortrait
+      setPreferredVideoStabilizationMode(AVCaptureVideoStabilizationModeStandard)
+      if (supportsVideoMirroring) videoMirrored = true
     }
+
+    output.onCMSampleBufferRef(onCMSampleBufferRef)
   }
 }
 
