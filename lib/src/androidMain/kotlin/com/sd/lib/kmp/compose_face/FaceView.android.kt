@@ -26,7 +26,7 @@ actual fun FaceView(
     contentAlignment = Alignment.Center,
   ) {
     if (state.stage !is FaceViewModel.Stage.Finished) {
-      CameraPreviewView {
+      CameraPreviewView(modifier = Modifier.matchParentSize()) {
         val bitmap = it.toBitmap()
         val faceInfo = detector.detect(bitmap)
         vm.process(faceInfo)
