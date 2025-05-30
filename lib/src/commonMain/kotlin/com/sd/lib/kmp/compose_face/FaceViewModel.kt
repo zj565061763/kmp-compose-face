@@ -147,7 +147,6 @@ class FaceViewModel(
           listInteractionType = listType - firstType,
           interactionType = firstType,
           interactionStage = FaceInteractionStage.Interacting,
-          interactionCount = 0,
         ),
       )
     }
@@ -170,23 +169,16 @@ class FaceViewModel(
 
     when (stage.interactionStage) {
       FaceInteractionStage.Interacting -> {
-        val hasTargetInteraction = with(state.faceState) {
+        with(state.faceState) {
           when (stage.interactionType) {
             FaceInteractionType.Blink -> blink
             FaceInteractionType.Shake -> shake
             FaceInteractionType.MouthOpen -> mouthOpen
             FaceInteractionType.RaiseHead -> raiseHead
           }
-        }
-        if (hasTargetInteraction) {
-          val targetInteractionCount = 2
-          updateInteractingStage {
-            val newCount = it.interactionCount + 1
-            if (newCount >= targetInteractionCount) {
-              it.copy(interactionCount = newCount, interactionStage = FaceInteractionStage.Stop)
-            } else {
-              it.copy(interactionCount = newCount)
-            }
+        }.also { hasTargetInteraction ->
+          if (hasTargetInteraction) {
+            updateInteractingStage { it.copy(interactionStage = FaceInteractionStage.Stop) }
           }
         }
       }
@@ -212,7 +204,6 @@ class FaceViewModel(
         listInteractionType = newList,
         interactionType = nextType,
         interactionStage = FaceInteractionStage.Interacting,
-        interactionCount = 0,
       )
     }
   }
@@ -302,8 +293,6 @@ class FaceViewModel(
       val interactionType: FaceInteractionType,
       /** 当前互动的阶段 */
       val interactionStage: FaceInteractionStage,
-      /** 当前互动类型的次数 */
-      val interactionCount: Int,
     ) : Stage
 
     /** 结束 */
@@ -386,7 +375,7 @@ class FaceViewModel(
     fun minFaceQualityOfStage(stage: Stage): Float {
       if (stage is Stage.Interacting
         && stage.interactionStage == FaceInteractionStage.Interacting
-      ) return 0.6f
+      ) return 0.5f
       return 0.7f
     }
 
