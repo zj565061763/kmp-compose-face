@@ -299,20 +299,15 @@ internal class FaceInfoDetector {
 
 @OptIn(ExperimentalForeignApi::class)
 private fun sampleBufferToImageData(imageBuffer: CVImageBufferRef): HFImageData? {
-  try {
-    val baseAddress = CVPixelBufferGetBaseAddress(imageBuffer)?.reinterpret<UByteVar>() ?: return null
-    val width = CVPixelBufferGetWidth(imageBuffer).toInt()
-    val height = CVPixelBufferGetHeight(imageBuffer).toInt()
-    return nativeHeap.alloc<HFImageData>().apply {
-      this.width = width
-      this.height = height
-      this.format = HF_STREAM_BGRA
-      this.rotation = HF_CAMERA_ROTATION_0
-      this.data = baseAddress
-    }
-  } catch (e: Throwable) {
-    FaceManager.log { "sampleBufferToImageData error $e" }
-    return null
+  val baseAddress = CVPixelBufferGetBaseAddress(imageBuffer)?.reinterpret<UByteVar>() ?: return null
+  val width = CVPixelBufferGetWidth(imageBuffer).toInt()
+  val height = CVPixelBufferGetHeight(imageBuffer).toInt()
+  return nativeHeap.alloc<HFImageData>().apply {
+    this.width = width
+    this.height = height
+    this.format = HF_STREAM_BGRA
+    this.rotation = HF_CAMERA_ROTATION_0
+    this.data = baseAddress
   }
 }
 
