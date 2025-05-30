@@ -9,6 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.CoreMedia.CMSampleBufferGetImageBuffer
+import platform.CoreVideo.CVPixelBufferLockBaseAddress
+import platform.CoreVideo.CVPixelBufferUnlockBaseAddress
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
@@ -29,8 +32,20 @@ actual fun FaceView(
   ) {
     if (state.stage !is FaceViewModel.Stage.Finished) {
       CameraPreviewView(modifier = Modifier.matchParentSize()) {
-        val faceInfo = detector.detect(it)
-        vm.process(faceInfo)
+        val imageBuffer = CMSampleBufferGetImageBuffer(it)
+        if (imageBuffer != null) {
+          try {
+            // lock
+            CVPixelBufferLockBaseAddress(imageBuffer, 0.toULong())
+            val faceInfo = detector.detect(imageBuffer)
+            vm.process(faceInfo)
+          } finally {
+            // unlock
+            CVPixelBufferUnlockBaseAddress(imageBuffer, 0.toULong())
+          }
+        } else {
+          FaceManager.log { "CMSampleBufferGetImageBuffer returns null" }
+        }
       }
     }
   }

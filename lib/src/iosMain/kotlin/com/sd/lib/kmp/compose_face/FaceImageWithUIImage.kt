@@ -37,7 +37,7 @@ class FaceImageWithUIImage internal constructor(
   override fun close() {
     imageData?.also {
       imageData = null
-      it.data?.also { nativeHeap.free(it.rawValue) }
+//      it.data?.also { nativeHeap.free(it.rawValue) }
       nativeHeap.free(it.rawPtr)
     }
   }

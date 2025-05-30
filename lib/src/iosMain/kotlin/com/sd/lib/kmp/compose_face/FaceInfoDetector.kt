@@ -28,29 +28,23 @@ import kotlinx.cinterop.IntVarOf
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.alloc
-import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.set
 import kotlinx.cinterop.value
-import platform.CoreMedia.CMSampleBufferGetImageBuffer
-import platform.CoreMedia.CMSampleBufferRef
+import platform.CoreVideo.CVImageBufferRef
 import platform.CoreVideo.CVPixelBufferGetBaseAddress
 import platform.CoreVideo.CVPixelBufferGetHeight
 import platform.CoreVideo.CVPixelBufferGetWidth
-import platform.CoreVideo.CVPixelBufferLockBaseAddress
-import platform.CoreVideo.CVPixelBufferUnlockBaseAddress
-import kotlin.time.measureTimedValue
 
 @OptIn(ExperimentalForeignApi::class)
 internal class FaceInfoDetector {
   private var _sessionHolder: HFSessionHolder? = null
 
-  fun detect(buffer: CMSampleBufferRef): FaceInfo {
+  fun detect(imageBuffer: CVImageBufferRef): FaceInfo {
     val session = (_sessionHolder ?: HFSessionHolder().also { _sessionHolder = it }).get()
     if (session == null) {
       FaceManager.log { "detect session is null" }
@@ -58,12 +52,7 @@ internal class FaceInfoDetector {
       return ErrorGetFaceInfo()
     }
 
-    val (imageData, _) = measureTimedValue {
-      sampleBufferToImageData(buffer)
-    }.also {
-      FaceManager.log { "detect sampleBufferToImageData time:${it.duration.inWholeMilliseconds}" }
-    }
-
+    val imageData = sampleBufferToImageData(imageBuffer)
     if (imageData == null) {
       FaceManager.log { "detect sampleBufferToImageData returns null" }
       return ErrorGetFaceInfo()
@@ -309,39 +298,21 @@ internal class FaceInfoDetector {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun sampleBufferToImageData(buffer: CMSampleBufferRef): HFImageData? {
-  val imageBuffer = CMSampleBufferGetImageBuffer(buffer) ?: return null
+private fun sampleBufferToImageData(imageBuffer: CVImageBufferRef): HFImageData? {
   try {
-    CVPixelBufferLockBaseAddress(imageBuffer, 0.toULong())
     val baseAddress = CVPixelBufferGetBaseAddress(imageBuffer)?.reinterpret<UByteVar>() ?: return null
-
     val width = CVPixelBufferGetWidth(imageBuffer).toInt()
     val height = CVPixelBufferGetHeight(imageBuffer).toInt()
-
-    val pixelCount = width * height
-    val bgra = nativeHeap.allocArray<UByteVar>(pixelCount * 4)
-
-    var m = 0
-    var n = 0
-    repeat(pixelCount) {
-      bgra[m++] = baseAddress[n++] // B
-      bgra[m++] = baseAddress[n++] // G
-      bgra[m++] = baseAddress[n++] // R
-      bgra[m++] = baseAddress[n++] // A
-    }
-
     return nativeHeap.alloc<HFImageData>().apply {
       this.width = width
       this.height = height
       this.format = HF_STREAM_BGRA
       this.rotation = HF_CAMERA_ROTATION_0
-      this.data = bgra
+      this.data = baseAddress
     }
   } catch (e: Throwable) {
     FaceManager.log { "sampleBufferToImageData error $e" }
     return null
-  } finally {
-    CVPixelBufferUnlockBaseAddress(imageBuffer, 0.toULong())
   }
 }
 
