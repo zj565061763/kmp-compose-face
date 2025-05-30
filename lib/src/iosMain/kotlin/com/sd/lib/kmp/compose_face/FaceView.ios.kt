@@ -12,6 +12,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreMedia.CMSampleBufferGetImageBuffer
 import platform.CoreVideo.CVPixelBufferLockBaseAddress
 import platform.CoreVideo.CVPixelBufferUnlockBaseAddress
+import platform.CoreVideo.kCVPixelBufferLock_ReadOnly
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
@@ -36,12 +37,12 @@ actual fun FaceView(
         if (imageBuffer != null) {
           try {
             // lock
-            CVPixelBufferLockBaseAddress(imageBuffer, 0.toULong())
+            CVPixelBufferLockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly)
             val faceInfo = detector.detect(imageBuffer)
             vm.process(faceInfo)
           } finally {
             // unlock
-            CVPixelBufferUnlockBaseAddress(imageBuffer, 0.toULong())
+            CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly)
           }
         } else {
           FaceManager.log { "CMSampleBufferGetImageBuffer returns null" }
