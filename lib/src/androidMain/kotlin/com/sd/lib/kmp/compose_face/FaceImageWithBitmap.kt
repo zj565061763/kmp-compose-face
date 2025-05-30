@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 class FaceImageWithBitmap internal constructor(
   val src: Bitmap,
 ) : FaceImage {
-  override fun close() {
-    src.recycle()
-  }
+  override fun init() = Unit
+  override fun close() = Unit
 }

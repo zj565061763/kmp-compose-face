@@ -1,9 +1,12 @@
 package com.sd.lib.kmp.compose_face
 
+import InspireFace.HFImageData
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.allocArray
+import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.set
 import platform.CoreGraphics.CGBitmapContextCreate
 import platform.CoreGraphics.CGBitmapContextCreateImage
@@ -15,19 +18,34 @@ import platform.CoreGraphics.CGImageRelease
 import platform.UIKit.UIImage
 import platform.posix.size_t
 
+@OptIn(ExperimentalForeignApi::class)
 class FaceImageWithUIImage internal constructor(
-  private val imageData: ImageData,
+  private var imageData: HFImageData?,
 ) : FaceImage {
 
+  private var _uiImage: UIImage? = null
+
   fun getUIImage(): UIImage? {
-    return imageData.toUIImage()
+    return _uiImage
   }
 
-  override fun close() = Unit
+  override fun init() {
+    _uiImage = imageData?.toUIImage()
+    close()
+  }
+
+  override fun close() {
+    imageData?.also {
+      imageData = null
+      it.data?.also { nativeHeap.free(it.rawValue) }
+      nativeHeap.free(it.rawPtr)
+    }
+  }
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun ImageData.toUIImage(): UIImage? {
+private fun HFImageData.toUIImage(): UIImage? {
+  val data = data ?: return null
   return memScoped {
     val pixelCount = width * height
     val rgbaSize = pixelCount * 4

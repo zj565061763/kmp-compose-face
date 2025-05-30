@@ -28,13 +28,14 @@ import kotlinx.cinterop.IntVarOf
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.UByteVar
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.nativeHeap
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.reinterpret
-import kotlinx.cinterop.toCValues
+import kotlinx.cinterop.set
 import kotlinx.cinterop.value
 import platform.CoreMedia.CMSampleBufferGetImageBuffer
 import platform.CoreMedia.CMSampleBufferRef
@@ -87,7 +88,7 @@ internal class FaceInfoDetector {
 
   private fun MemScope.detect(
     session: HFSession,
-    imageData: ImageData,
+    imageData: HFImageData,
   ): FaceInfo {
     if (imageData.width <= 0 || imageData.height <= 0) {
       FaceManager.log { "detect src width or height <= 0" }
@@ -96,10 +97,9 @@ internal class FaceInfoDetector {
 
     // HFImageStream
     val imageStream = run {
-      val hfImageData = imageDataToHFImageData(imageData)
       val imageStreamPtr = alloc<CPointerVarOf<HFImageStream>>()
       HFCreateImageStream(
-        data = hfImageData.ptr,
+        data = imageData.ptr,
         handle = imageStreamPtr.ptr,
       ).toInt().also { ret ->
         if (ret != HSUCCEED) {
@@ -129,7 +129,7 @@ internal class FaceInfoDetector {
   private fun MemScope.detect(
     session: HFSession,
     imageStream: HFImageStream,
-    imageData: ImageData,
+    imageData: HFImageData,
   ): FaceInfo {
     // HFMultipleFaceData
     val multipleFaceData = alloc<HFMultipleFaceData>()
@@ -300,16 +300,16 @@ internal class FaceInfoDetector {
     override val faceData: FloatArray,
     override val faceState: FaceState,
     override val faceBounds: FaceBounds,
-    private val imageData: ImageData,
+    private val imageData: HFImageData,
   ) : ValidFaceInfo {
-    override fun getFaceImage(): FaceImage {
-      return FaceImageWithUIImage(imageData = imageData)
-    }
+    private val _faceImage = FaceImageWithUIImage(imageData = imageData)
+    override fun getFaceImage(): FaceImage = _faceImage
+    override fun close() = _faceImage.close()
   }
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun sampleBufferToImageData(buffer: CMSampleBufferRef): ImageData? {
+private fun sampleBufferToImageData(buffer: CMSampleBufferRef): HFImageData? {
   val imageBuffer = CMSampleBufferGetImageBuffer(buffer) ?: return null
   try {
     CVPixelBufferLockBaseAddress(imageBuffer, 0.toULong())
@@ -318,30 +318,30 @@ private fun sampleBufferToImageData(buffer: CMSampleBufferRef): ImageData? {
     val width = CVPixelBufferGetWidth(imageBuffer).toInt()
     val height = CVPixelBufferGetHeight(imageBuffer).toInt()
 
-    val size = width * height * 4
-    val data = baseAddress.readBytes(size).toUByteArray()
+    val pixelCount = width * height
+    val bgra = nativeHeap.allocArray<UByteVar>(pixelCount * 4)
 
-    return ImageData(
-      width = width,
-      height = height,
-      data = data,
-    )
+    var m = 0
+    var n = 0
+    repeat(pixelCount) {
+      bgra[m++] = baseAddress[n++] // B
+      bgra[m++] = baseAddress[n++] // G
+      bgra[m++] = baseAddress[n++] // R
+      bgra[m++] = baseAddress[n++] // A
+    }
+
+    return nativeHeap.alloc<HFImageData>().apply {
+      this.width = width
+      this.height = height
+      this.format = HF_STREAM_BGRA
+      this.rotation = HF_CAMERA_ROTATION_0
+      this.data = bgra
+    }
   } catch (e: Throwable) {
     FaceManager.log { "sampleBufferToImageData error $e" }
     return null
   } finally {
     CVPixelBufferUnlockBaseAddress(imageBuffer, 0.toULong())
-  }
-}
-
-@OptIn(ExperimentalForeignApi::class)
-private fun MemScope.imageDataToHFImageData(imageData: ImageData): HFImageData {
-  return alloc<HFImageData>().apply {
-    this.data = imageData.data.toCValues().ptr
-    this.width = imageData.width
-    this.height = imageData.height
-    this.format = HF_STREAM_BGRA
-    this.rotation = HF_CAMERA_ROTATION_0
   }
 }
 

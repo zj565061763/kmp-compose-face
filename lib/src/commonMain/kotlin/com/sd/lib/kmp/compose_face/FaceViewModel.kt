@@ -82,11 +82,15 @@ class FaceViewModel(
             faceBounds = faceInfo.faceBounds,
           )
         }
-        val state = _currentState
-        when (val stage = state.stage) {
-          is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo, state = state)
-          is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, state = state, stage = stage)
-          else -> {}
+        try {
+          val state = _currentState
+          when (val stage = state.stage) {
+            is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo, state = state)
+            is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, state = state, stage = stage)
+            else -> {}
+          }
+        } finally {
+          faceInfo.close()
         }
       }
     }
@@ -215,6 +219,7 @@ class FaceViewModel(
 
   private fun notifySuccess(data: FloatArray, image: FaceImage) {
     finishWithType(FinishType.Success)
+    image.init()
     onSuccess(FaceResult(data = data, image = image))
   }
 

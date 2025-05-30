@@ -142,8 +142,7 @@ internal class FaceInfoDetector {
     override val faceBounds: FaceBounds,
     private val src: Bitmap,
   ) : ValidFaceInfo {
-    override fun getFaceImage(): FaceImage {
-      return FaceImageWithBitmap(src = src)
-    }
+    override fun getFaceImage(): FaceImage = FaceImageWithBitmap(src = src)
+    override fun close() = Unit
   }
 }
