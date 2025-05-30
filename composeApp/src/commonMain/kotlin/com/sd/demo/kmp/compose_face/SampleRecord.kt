@@ -33,6 +33,7 @@ fun SampleRecord(
     FaceViewModel(
       coroutineScope = coroutineScope,
       getInteractionTypes = { listOf(FaceInteractionType.Blink) },
+      timeout = 15_000_000,
       onSuccess = { result ->
         faceImage = result.image
         ComposeApp.faceData = result.data
