@@ -11,10 +11,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.cinterop.ExperimentalForeignApi
+import platform.AVFoundation.AVCaptureConnection
+import platform.AVFoundation.AVCaptureOutput
+import platform.AVFoundation.AVCaptureVideoDataOutputSampleBufferDelegateProtocol
 import platform.AVFoundation.AVCaptureVideoPreviewLayer
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.CoreMedia.CMSampleBufferRef
 import platform.UIKit.UIView
+import platform.darwin.DISPATCH_QUEUE_SERIAL
+import platform.darwin.NSObject
+import platform.darwin.dispatch_queue_create
+import kotlin.time.measureTime
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
@@ -24,11 +31,29 @@ internal fun CameraPreviewView(
 ) {
   val onDataUpdated by rememberUpdatedState(onData)
 
+  val queue = remember {
+    dispatch_queue_create("VideoDataOutputQueue", DISPATCH_QUEUE_SERIAL as? NSObject)
+  }
+
+  val delegate = remember {
+    var count = 0
+    object : NSObject(), AVCaptureVideoDataOutputSampleBufferDelegateProtocol {
+      override fun captureOutput(output: AVCaptureOutput, didOutputSampleBuffer: CMSampleBufferRef?, fromConnection: AVCaptureConnection) {
+        if (didOutputSampleBuffer != null) {
+          count++
+          measureTime {
+            onDataUpdated(didOutputSampleBuffer)
+          }.also {
+            FaceManager.log { "captureOutput $count time${it.inWholeMilliseconds}" }
+          }
+        }
+      }
+    }
+  }
+
   val captureSession = remember {
     runCatching {
-      createAVCaptureSession { buffer ->
-        onDataUpdated(buffer)
-      }
+      createAVCaptureSession(queue = queue, delegate = delegate)
     }.getOrElse {
       FaceManager.log { "createAVCaptureSession error $it" }
       null

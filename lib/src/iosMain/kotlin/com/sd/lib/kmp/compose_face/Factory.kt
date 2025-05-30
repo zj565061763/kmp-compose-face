@@ -2,12 +2,10 @@ package com.sd.lib.kmp.compose_face
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.interpretObjCPointerOrNull
-import platform.AVFoundation.AVCaptureConnection
 import platform.AVFoundation.AVCaptureDevice
 import platform.AVFoundation.AVCaptureDeviceInput
 import platform.AVFoundation.AVCaptureDevicePositionFront
 import platform.AVFoundation.AVCaptureDeviceTypeBuiltInWideAngleCamera
-import platform.AVFoundation.AVCaptureOutput
 import platform.AVFoundation.AVCaptureSession
 import platform.AVFoundation.AVCaptureSessionPreset640x480
 import platform.AVFoundation.AVCaptureVideoDataOutput
@@ -16,18 +14,15 @@ import platform.AVFoundation.AVCaptureVideoOrientationPortrait
 import platform.AVFoundation.AVCaptureVideoStabilizationModeStandard
 import platform.AVFoundation.AVMediaTypeVideo
 import platform.AVFoundation.defaultDeviceWithDeviceType
-import platform.CoreMedia.CMSampleBufferRef
 import platform.CoreVideo.kCVPixelBufferPixelFormatTypeKey
 import platform.CoreVideo.kCVPixelFormatType_32BGRA
 import platform.Foundation.NSString
-import platform.darwin.DISPATCH_QUEUE_SERIAL
 import platform.darwin.NSObject
-import platform.darwin.dispatch_queue_create
-import kotlin.time.measureTime
 
 @OptIn(ExperimentalForeignApi::class)
 internal fun createAVCaptureSession(
-  onCMSampleBufferRef: (CMSampleBufferRef) -> Unit,
+  queue: NSObject?,
+  delegate: AVCaptureVideoDataOutputSampleBufferDelegateProtocol,
 ): AVCaptureSession {
   return AVCaptureSession().apply {
     val input = createAVCaptureDeviceInput()
@@ -43,7 +38,7 @@ internal fun createAVCaptureSession(
       if (supportsVideoMirroring) videoMirrored = true
     }
 
-    output.setCallback(onCMSampleBufferRef)
+    output.setSampleBufferDelegate(delegate, queue)
   }
 }
 
@@ -68,26 +63,4 @@ private fun createAVCaptureVideoDataOutput(): AVCaptureVideoDataOutput {
     val value = kCVPixelFormatType_32BGRA
     setVideoSettings(mapOf(key to value))
   }
-}
-
-@OptIn(ExperimentalForeignApi::class)
-private fun AVCaptureVideoDataOutput.setCallback(
-  onCMSampleBufferRef: (CMSampleBufferRef) -> Unit,
-) {
-  var count = 0
-  val delegate = object : NSObject(), AVCaptureVideoDataOutputSampleBufferDelegateProtocol {
-    override fun captureOutput(output: AVCaptureOutput, didOutputSampleBuffer: CMSampleBufferRef?, fromConnection: AVCaptureConnection) {
-      if (didOutputSampleBuffer != null) {
-        count++
-        measureTime {
-          onCMSampleBufferRef(didOutputSampleBuffer)
-        }.also {
-          FaceManager.log { "captureOutput $count time:${it.inWholeMilliseconds}" }
-        }
-      }
-    }
-  }
-
-  val queue = dispatch_queue_create("VideoDataOutputQueue", DISPATCH_QUEUE_SERIAL as? NSObject)
-  setSampleBufferDelegate(delegate, queue)
 }
