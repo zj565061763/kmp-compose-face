@@ -16,7 +16,7 @@ import platform.UIKit.UIImage
 import platform.posix.size_t
 
 class FaceImageWithUIImage internal constructor(
-  private val imageData: BGRImageData,
+  private val imageData: ImageData,
 ) : FaceImage {
 
   fun getUIImage(): UIImage? {
@@ -27,11 +27,10 @@ class FaceImageWithUIImage internal constructor(
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun BGRImageData.toUIImage(): UIImage? {
+private fun ImageData.toUIImage(): UIImage? {
   return memScoped {
     val pixelCount = width * height
     val rgbaSize = pixelCount * 4
-
     val rgba = allocArray<UByteVar>(rgbaSize)
 
     var m = 0
@@ -40,10 +39,11 @@ private fun BGRImageData.toUIImage(): UIImage? {
       val b = data[n++]
       val g = data[n++]
       val r = data[n++]
+      val a = data[n++]
       rgba[m++] = r
       rgba[m++] = g
       rgba[m++] = b
-      rgba[m++] = 255u.toUByte()
+      rgba[m++] = a
     }
 
     val bitsPerComponent: size_t = 8uL

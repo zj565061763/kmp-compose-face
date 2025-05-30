@@ -9,7 +9,6 @@ import InspireFace.HFSessionSetFilterMinimumFacePixelSize
 import InspireFace.HFSessionSetTrackPreviewSize
 import InspireFace.HF_ENABLE_FACE_RECOGNITION
 import InspireFace.HF_ENABLE_INTERACTION
-import InspireFace.HF_ENABLE_LIVENESS
 import InspireFace.HF_ENABLE_QUALITY
 import InspireFace.HSUCCEED
 import kotlinx.cinterop.CPointerVarOf
@@ -29,7 +28,7 @@ internal class HFSessionHolder {
   private fun init() {
     val sessionPtr = nativeHeap.alloc<CPointerVarOf<HFSession>>().also { _sessionPtr = it }
     HFCreateInspireFaceSessionOptional(
-      customOption = HF_ENABLE_FACE_RECOGNITION or HF_ENABLE_QUALITY or HF_ENABLE_INTERACTION or HF_ENABLE_LIVENESS,
+      customOption = HF_ENABLE_FACE_RECOGNITION or HF_ENABLE_QUALITY or HF_ENABLE_INTERACTION,
       detectMode = HFDetectMode.HF_DETECT_MODE_LIGHT_TRACK,
       maxDetectFaceNum = 2,
       detectPixelLevel = -1,

@@ -23,6 +23,7 @@ import platform.Foundation.NSString
 import platform.darwin.DISPATCH_QUEUE_SERIAL
 import platform.darwin.NSObject
 import platform.darwin.dispatch_queue_create
+import kotlin.time.measureTime
 
 @OptIn(ExperimentalForeignApi::class)
 internal fun createAVCaptureSession(
@@ -73,10 +74,16 @@ private fun createAVCaptureVideoDataOutput(): AVCaptureVideoDataOutput {
 private fun AVCaptureVideoDataOutput.setCallback(
   onCMSampleBufferRef: (CMSampleBufferRef) -> Unit,
 ) {
+  var count = 0
   val delegate = object : NSObject(), AVCaptureVideoDataOutputSampleBufferDelegateProtocol {
     override fun captureOutput(output: AVCaptureOutput, didOutputSampleBuffer: CMSampleBufferRef?, fromConnection: AVCaptureConnection) {
       if (didOutputSampleBuffer != null) {
-        onCMSampleBufferRef(didOutputSampleBuffer)
+        count++
+        measureTime {
+          onCMSampleBufferRef(didOutputSampleBuffer)
+        }.also {
+          FaceManager.log { "captureOutput $count time:${it.inWholeMilliseconds}" }
+        }
       }
     }
   }
