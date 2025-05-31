@@ -27,7 +27,7 @@ class FaceViewModel(
   /** 超时(毫秒) */
   private val timeout: Long = 15_000,
   /** 最小验证人脸相似度[0-1] */
-  private val minValidateSimilarity: Float = 0.8f,
+  private val minValidateSimilarity: Float = 0.75f,
   /** 成功回调 */
   private val onSuccess: (FaceResult) -> Unit,
 ) {
@@ -178,7 +178,15 @@ class FaceViewModel(
           }
         }.also { hasTargetInteraction ->
           if (hasTargetInteraction) {
-            updateInteractingStage { it.copy(interactionStage = FaceInteractionStage.Stop) }
+            val targetInteractionCount = targetInteractionCount(stage.interactionType)
+            updateInteractingStage {
+              val newCount = it.interactionCount + 1
+              if (newCount >= targetInteractionCount) {
+                it.copy(interactionStage = FaceInteractionStage.Stop)
+              } else {
+                it.copy(interactionCount = newCount)
+              }
+            }
           }
         }
       }
@@ -293,6 +301,8 @@ class FaceViewModel(
       val interactionType: FaceInteractionType,
       /** 当前互动的阶段 */
       val interactionStage: FaceInteractionStage,
+      /** 当前互动类型的互动次数 */
+      val interactionCount: Int = 0,
     ) : Stage
 
     /** 结束 */
@@ -372,19 +382,26 @@ class FaceViewModel(
   }
 
   companion object {
-    fun minFaceQualityOfStage(stage: Stage): Float {
+    private fun minFaceQualityOfStage(stage: Stage): Float {
       if (stage is Stage.Interacting
         && stage.interactionStage == FaceInteractionStage.Interacting
       ) return 0.5f
       return 0.7f
     }
 
-    fun minFaceScaleOfStage(stage: Stage): Float {
+    private fun minFaceScaleOfStage(stage: Stage): Float {
       if (stage is Stage.Interacting
         && stage.interactionStage == FaceInteractionStage.Interacting
         && stage.interactionType == FaceInteractionType.RaiseHead
       ) return 0.4f
       return 0.5f
+    }
+
+    private fun targetInteractionCount(type: FaceInteractionType): Int {
+      return when (type) {
+        FaceInteractionType.Blink -> 3
+        else -> 1
+      }
     }
   }
 }
