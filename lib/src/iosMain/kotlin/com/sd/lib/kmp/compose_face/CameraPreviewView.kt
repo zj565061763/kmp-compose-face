@@ -21,7 +21,6 @@ import platform.UIKit.UIView
 import platform.darwin.DISPATCH_QUEUE_SERIAL
 import platform.darwin.NSObject
 import platform.darwin.dispatch_queue_create
-import kotlin.time.measureTime
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
@@ -36,16 +35,10 @@ internal fun CameraPreviewView(
   }
 
   val delegate = remember {
-    var count = 0
     object : NSObject(), AVCaptureVideoDataOutputSampleBufferDelegateProtocol {
       override fun captureOutput(output: AVCaptureOutput, didOutputSampleBuffer: CMSampleBufferRef?, fromConnection: AVCaptureConnection) {
         if (didOutputSampleBuffer != null) {
-          count++
-          measureTime {
-            onDataUpdated(didOutputSampleBuffer)
-          }.also {
-            FaceManager.log { "captureOutput $count time${it.inWholeMilliseconds}" }
-          }
+          onDataUpdated(didOutputSampleBuffer)
         }
       }
     }

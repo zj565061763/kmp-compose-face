@@ -42,5 +42,6 @@ private fun MemScope.floatArrayToHFFaceFeature(array: FloatArray): HFFaceFeature
   }
   return alloc<HFFaceFeature>().apply {
     this.data = dataPtr
+    this.size = array.size
   }
 }

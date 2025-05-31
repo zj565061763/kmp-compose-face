@@ -275,7 +275,7 @@ internal class FaceInfoDetector {
       faceHeight = faceRect.height,
     )
 
-    FaceManager.log { "$faceState $faceBounds" }
+    FaceManager.log { "$faceState $faceBounds faceScale:${faceBounds.faceWidthScale}" }
 
     return SDKFaceInfo(
       faceData = faceData,

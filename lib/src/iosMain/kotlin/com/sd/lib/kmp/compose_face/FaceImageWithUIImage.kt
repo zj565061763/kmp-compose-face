@@ -15,6 +15,7 @@ import platform.CoreGraphics.CGColorSpaceRelease
 import platform.CoreGraphics.CGContextRelease
 import platform.CoreGraphics.CGImageAlphaInfo
 import platform.CoreGraphics.CGImageRelease
+import platform.CoreGraphics.kCGBitmapByteOrder32Little
 import platform.UIKit.UIImage
 import platform.posix.size_t
 
@@ -67,7 +68,7 @@ private fun HFImageData.toUIImage(): UIImage? {
     val bytesPerRow: size_t = (4 * width).toULong()
 
     val colorSpace = CGColorSpaceCreateDeviceRGB()
-    val bitmapInfo = CGImageAlphaInfo.kCGImageAlphaPremultipliedLast
+    val bitmapInfo = kCGBitmapByteOrder32Little or CGImageAlphaInfo.kCGImageAlphaPremultipliedFirst.value
 
     val context = CGBitmapContextCreate(
       data = rgba,
@@ -76,7 +77,7 @@ private fun HFImageData.toUIImage(): UIImage? {
       bitsPerComponent = bitsPerComponent,
       bytesPerRow = bytesPerRow,
       space = colorSpace,
-      bitmapInfo = bitmapInfo.value,
+      bitmapInfo = bitmapInfo,
     )
 
     val cgImage = CGBitmapContextCreateImage(context) ?: return null

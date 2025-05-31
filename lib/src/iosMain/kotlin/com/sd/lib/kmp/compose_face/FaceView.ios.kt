@@ -46,6 +46,7 @@ actual fun FaceView(
           }
         } else {
           FaceManager.log { "CMSampleBufferGetImageBuffer returns null" }
+          vm.process(ErrorGetFaceInfo())
         }
       }
     }
