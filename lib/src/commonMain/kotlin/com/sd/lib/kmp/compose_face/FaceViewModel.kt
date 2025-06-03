@@ -37,8 +37,8 @@ class FaceViewModel(
   private val _currentState get() = stateFlow.value
 
   private val _faceInfoChecker = FaceInfoChecker()
-  /** 保存通过检测的数据 */
-  private var _checkedFaceInfo: ValidFaceInfo? = null
+  private var _checkedFaceData: FloatArray? = null
+  private var _checkedFaceImage: FaceImage? = null
 
   private var _timeoutJob: Job? = null
   private var _staticJob: Job? = null
@@ -89,9 +89,7 @@ class FaceViewModel(
             else -> {}
           }
         } finally {
-          if (faceInfo !== _checkedFaceInfo) {
-            faceInfo.close()
-          }
+          faceInfo.close()
         }
       }
     }
@@ -116,8 +114,9 @@ class FaceViewModel(
       updateState { State(stage = Stage.Finished(type = type)) }
     }
     _faceInfoChecker.reset()
-    _checkedFaceInfo?.close()
-    _checkedFaceInfo = null
+    _checkedFaceData = null
+    _checkedFaceImage?.close()
+    _checkedFaceImage = null
   }
 
   /** 准备阶段 */
@@ -134,8 +133,8 @@ class FaceViewModel(
     }
 
     // 保存通过检测的数据
-    check(_checkedFaceInfo == null)
-    _checkedFaceInfo = faceInfo
+    _checkedFaceData = faceInfo.faceData
+    _checkedFaceImage = faceInfo.getFaceImage()
 
     val listType = listInteractionType.shuffled()
     val firstType = listType.first()
@@ -156,8 +155,9 @@ class FaceViewModel(
     state: State,
     stage: Stage.Interacting,
   ) {
-    val checkedFaceInfo = _checkedFaceInfo
-    if (checkedFaceInfo == null) {
+    val checkedFaceData = _checkedFaceData
+    val checkedFaceImage = _checkedFaceImage
+    if (checkedFaceData == null || checkedFaceImage == null) {
       finishWithType(FinishType.InternalError)
       return
     }
@@ -190,10 +190,8 @@ class FaceViewModel(
       FaceInteractionStage.Stop -> {
         val listInteractionType = stage.listInteractionType
         if (listInteractionType.isEmpty()) {
-          val checkedFaceData = checkedFaceInfo.faceData
           val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
           if (similarity >= minValidateSimilarity) {
-            val checkedFaceImage = checkedFaceInfo.getFaceImage()
             notifySuccess(data = checkedFaceData, image = checkedFaceImage)
           }
         } else {
