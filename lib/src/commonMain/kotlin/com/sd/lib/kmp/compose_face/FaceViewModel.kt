@@ -156,9 +156,8 @@ class FaceViewModel(
     state: State,
     stage: Stage.Interacting,
   ) {
-    val checkedFaceData = _checkedFaceInfo?.faceData
-    val checkedFaceImage = _checkedFaceInfo?.getFaceImage()
-    if (checkedFaceData == null || checkedFaceImage == null) {
+    val checkedFaceInfo = _checkedFaceInfo
+    if (checkedFaceInfo == null) {
       finishWithType(FinishType.InternalError)
       return
     }
@@ -191,8 +190,10 @@ class FaceViewModel(
       FaceInteractionStage.Stop -> {
         val listInteractionType = stage.listInteractionType
         if (listInteractionType.isEmpty()) {
+          val checkedFaceData = checkedFaceInfo.faceData
           val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
           if (similarity >= minValidateSimilarity) {
+            val checkedFaceImage = checkedFaceInfo.getFaceImage()
             notifySuccess(data = checkedFaceData, image = checkedFaceImage)
           }
         } else {
