@@ -76,15 +76,15 @@ private fun HFImageData.toUIImage(): UIImage? {
       return null
     }
 
-    val cgImage = CGBitmapContextCreateImage(context)
-    if (cgImage == null) {
+    val image = CGBitmapContextCreateImage(context)
+    if (image == null) {
       CGContextRelease(context)
       CGColorSpaceRelease(colorSpace)
       return null
     }
 
-    UIImage.imageWithCGImage(cgImage).also {
-      CGImageRelease(cgImage)
+    UIImage.imageWithCGImage(image).also {
+      CGImageRelease(image)
       CGContextRelease(context)
       CGColorSpaceRelease(colorSpace)
     }
