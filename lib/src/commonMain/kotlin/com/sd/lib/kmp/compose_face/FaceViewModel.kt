@@ -53,6 +53,7 @@ class FaceViewModel(
     .map { it.checkInvalidType() }
     .distinctUntilChanged()
     .mapLatest { tips ->
+      logMsg { "invalidTypeFlow $tips" }
       if (tips != null) delay(800)
       tips
     }.distinctUntilChanged()

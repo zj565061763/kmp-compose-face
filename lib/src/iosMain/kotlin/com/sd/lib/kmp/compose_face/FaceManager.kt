@@ -30,9 +30,6 @@ object FaceManager {
   }
 
   internal inline fun log(block: () -> String) {
-    val msg = block()
-    if (msg.isNotEmpty()) {
-      println("kmp-compose-face $msg")
-    }
+    logMsg(block)
   }
 }

@@ -1,7 +1,6 @@
 package com.sd.lib.kmp.compose_face
 
 import android.content.Context
-import android.util.Log
 import com.insightface.sdk.inspireface.InspireFace
 import com.sd.lib.kmp.compose_face.FaceManager.init
 
@@ -27,9 +26,6 @@ object FaceManager {
   }
 
   internal inline fun log(block: () -> String) {
-    val msg = block()
-    if (msg.isNotEmpty()) {
-      Log.i("kmp-compose-face", msg)
-    }
+    logMsg(block)
   }
 }
