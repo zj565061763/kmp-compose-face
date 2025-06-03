@@ -126,15 +126,15 @@ class FaceViewModel(
   ) {
     if (!_faceInfoChecker.check(state, targetCount = 2)) return
 
-    // 保存通过检测的数据
-    check(_checkedFaceInfo == null)
-    _checkedFaceInfo = faceInfo
-
     val listInteractionType = getInteractionTypes()
     if (listInteractionType.isEmpty()) {
       notifySuccess(data = faceInfo.faceData, image = faceInfo.getFaceImage())
       return
     }
+
+    // 保存通过检测的数据
+    check(_checkedFaceInfo == null)
+    _checkedFaceInfo = faceInfo
 
     val listType = listInteractionType.shuffled()
     val firstType = listType.first()
