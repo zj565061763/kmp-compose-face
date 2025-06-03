@@ -15,9 +15,7 @@ import platform.CoreGraphics.CGColorSpaceRelease
 import platform.CoreGraphics.CGContextRelease
 import platform.CoreGraphics.CGImageAlphaInfo
 import platform.CoreGraphics.CGImageRelease
-import platform.CoreGraphics.kCGBitmapByteOrder32Little
 import platform.UIKit.UIImage
-import platform.posix.size_t
 
 @OptIn(ExperimentalForeignApi::class)
 class FaceImageWithUIImage internal constructor(
@@ -48,9 +46,7 @@ private fun HFImageData.toUIImage(): UIImage? {
   val data = data ?: return null
   return memScoped {
     val pixelCount = width * height
-    val rgbaSize = pixelCount * 4
-    val rgba = allocArray<UByteVar>(rgbaSize)
-
+    val rgba = allocArray<UByteVar>(pixelCount * 4)
     var m = 0
     var n = 0
     repeat(pixelCount) {
@@ -64,29 +60,33 @@ private fun HFImageData.toUIImage(): UIImage? {
       rgba[m++] = a
     }
 
-    val bitsPerComponent: size_t = 8uL
-    val bytesPerRow: size_t = (4 * width).toULong()
-
-    val colorSpace = CGColorSpaceCreateDeviceRGB()
-    val bitmapInfo = kCGBitmapByteOrder32Little or CGImageAlphaInfo.kCGImageAlphaPremultipliedFirst.value
+    val colorSpace = CGColorSpaceCreateDeviceRGB() ?: return null
 
     val context = CGBitmapContextCreate(
       data = rgba,
       width = width.toULong(),
       height = height.toULong(),
-      bitsPerComponent = bitsPerComponent,
-      bytesPerRow = bytesPerRow,
+      bitsPerComponent = 8.toULong(),
+      bytesPerRow = (4 * width).toULong(),
       space = colorSpace,
-      bitmapInfo = bitmapInfo,
+      bitmapInfo = CGImageAlphaInfo.kCGImageAlphaPremultipliedLast.value,
     )
+    if (context == null) {
+      CGColorSpaceRelease(colorSpace)
+      return null
+    }
 
-    val cgImage = CGBitmapContextCreateImage(context) ?: return null
-    val uiImage = UIImage.imageWithCGImage(cgImage)
+    val cgImage = CGBitmapContextCreateImage(context)
+    if (cgImage == null) {
+      CGContextRelease(context)
+      CGColorSpaceRelease(colorSpace)
+      return null
+    }
 
-    CGContextRelease(context)
-    CGImageRelease(cgImage)
-    CGColorSpaceRelease(colorSpace)
-
-    uiImage
+    UIImage.imageWithCGImage(cgImage).also {
+      CGImageRelease(cgImage)
+      CGContextRelease(context)
+      CGColorSpaceRelease(colorSpace)
+    }
   }
 }
