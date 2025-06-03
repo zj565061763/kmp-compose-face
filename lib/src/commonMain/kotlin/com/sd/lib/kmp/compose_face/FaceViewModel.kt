@@ -138,7 +138,7 @@ class FaceViewModel(
     }
 
     _checkedFaceCount++
-    if (_checkedFaceCount < 10) {
+    if (_checkedFaceCount < 5) {
       return
     }
 
