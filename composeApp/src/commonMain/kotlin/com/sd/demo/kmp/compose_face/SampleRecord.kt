@@ -33,8 +33,7 @@ fun SampleRecord(
   val vm = remember {
     FaceViewModel(
       coroutineScope = coroutineScope,
-      getInteractionTypes = { listOf(FaceInteractionType.Blink) },
-      timeout = 15_000_000,
+      getInteractionTypes = { FaceInteractionType.entries },
       onSuccess = { result ->
         faceImage = result.image
         ComposeApp.faceData = result.data
