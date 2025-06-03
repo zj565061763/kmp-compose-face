@@ -1,6 +1,7 @@
 package com.sd.demo.kmp.compose_face
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
@@ -80,7 +81,7 @@ private fun SuccessContent(
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
     FaceImageView(
-      modifier = Modifier.fillMaxWidth(),
+      modifier = Modifier.fillMaxWidth().aspectRatio(1f),
       faceImage = faceImage,
     )
     Button(onClick = onClickRecord) {
