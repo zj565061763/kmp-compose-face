@@ -36,7 +36,8 @@ class FaceViewModel(
 
   private val _currentState get() = stateFlow.value
 
-  private val _faceInfoChecker = FaceInfoChecker()
+  private var _checkedFaceCount: Int = 0
+  private var _checkedFaceQuality: Float = 0f
   private var _checkedFaceData: FloatArray? = null
   private var _checkedFaceImage: FaceImage? = null
 
@@ -86,7 +87,7 @@ class FaceViewModel(
           when (val stage = state.stage) {
             is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo, state = state)
             is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, state = state, stage = stage)
-            else -> {}
+            else -> error("Illegal stage:$stage")
           }
         } finally {
           faceInfo.close()
@@ -113,7 +114,8 @@ class FaceViewModel(
     if (_currentState.stage !is Stage.Finished) {
       updateState { State(stage = Stage.Finished(type = type)) }
     }
-    _faceInfoChecker.reset()
+    _checkedFaceCount = 0
+    _checkedFaceQuality = 0f
     _checkedFaceData = null
     _checkedFaceImage?.close()
     _checkedFaceImage = null
@@ -124,17 +126,26 @@ class FaceViewModel(
     faceInfo: ValidFaceInfo,
     state: State,
   ) {
-    if (!_faceInfoChecker.check(state, targetCount = 2)) return
+    if (state.checkInvalidType() != null) return
 
-    val listInteractionType = getInteractionTypes()
-    if (listInteractionType.isEmpty()) {
-      notifySuccess(data = faceInfo.faceData, image = faceInfo.getFaceImage())
+    val newFaceQuality = state.faceState.faceQuality
+    if (newFaceQuality > _checkedFaceQuality) {
+      _checkedFaceQuality = newFaceQuality
+      _checkedFaceData = faceInfo.faceData
+      _checkedFaceImage?.close()
+      _checkedFaceImage = faceInfo.getFaceImage().also { it.init() }
+    }
+
+    _checkedFaceCount++
+    if (_checkedFaceCount < 10) {
       return
     }
 
-    // 保存通过检测的数据
-    _checkedFaceData = faceInfo.faceData
-    _checkedFaceImage = faceInfo.getFaceImage()
+    val listInteractionType = getInteractionTypes()
+    if (listInteractionType.isEmpty()) {
+      notifySuccess()
+      return
+    }
 
     val listType = listInteractionType.shuffled()
     val firstType = listType.first()
@@ -155,14 +166,13 @@ class FaceViewModel(
     state: State,
     stage: Stage.Interacting,
   ) {
+    if (state.checkInvalidType() != null) return
+
     val checkedFaceData = _checkedFaceData
-    val checkedFaceImage = _checkedFaceImage
-    if (checkedFaceData == null || checkedFaceImage == null) {
+    if (checkedFaceData == null) {
       finishWithType(FinishType.InternalError)
       return
     }
-
-    if (!_faceInfoChecker.check(state)) return
 
     when (stage.interactionStage) {
       FaceInteractionStage.Interacting -> {
@@ -192,7 +202,7 @@ class FaceViewModel(
         if (listInteractionType.isEmpty()) {
           val similarity = faceCompare(checkedFaceData, faceInfo.faceData)
           if (similarity >= minValidateSimilarity) {
-            notifySuccess(data = checkedFaceData, image = checkedFaceImage)
+            notifySuccess()
           }
         } else {
           moveToNextInteractionType(listInteractionType)
@@ -213,10 +223,15 @@ class FaceViewModel(
     }
   }
 
-  private fun notifySuccess(data: FloatArray, image: FaceImage) {
-    image.init()
-    finishWithType(FinishType.Success)
-    onSuccess(FaceResult(data = data, image = image))
+  private fun notifySuccess() {
+    val faceData = _checkedFaceData
+    val faceImage = _checkedFaceImage
+    if (faceData == null || faceImage == null) {
+      finishWithType(FinishType.InternalError)
+    } else {
+      finishWithType(FinishType.Success)
+      onSuccess(FaceResult(data = faceData, image = faceImage))
+    }
   }
 
   private fun restartTimeoutJob() {
@@ -330,23 +345,6 @@ class FaceViewModel(
 
     /** 脸部五官不自然 */
     FaceInteraction,
-  }
-
-  private inner class FaceInfoChecker {
-    private var _count = 0
-
-    fun check(
-      state: State,
-      targetCount: Int = 1,
-    ): Boolean {
-      require(targetCount > 0)
-      if (state.checkInvalidType() != null) _count = 0 else _count++
-      return (_count >= targetCount).also { if (it) reset() }
-    }
-
-    fun reset() {
-      _count = 0
-    }
   }
 
   private fun State.checkInvalidType(): InvalidType? {
