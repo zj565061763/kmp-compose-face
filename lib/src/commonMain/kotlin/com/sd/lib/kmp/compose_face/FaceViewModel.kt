@@ -37,10 +37,8 @@ class FaceViewModel(
   private val _currentState get() = stateFlow.value
 
   private val _faceInfoChecker = FaceInfoChecker()
-  /** 通过检测的脸部数据 */
-  private var _checkedFaceData: FloatArray? = null
-  /** 通过检测到脸部图片 */
-  private var _checkedFaceImage: FaceImage? = null
+  /** 保存通过检测的数据 */
+  private var _checkedFaceInfo: ValidFaceInfo? = null
 
   private var _timeoutJob: Job? = null
   private var _staticJob: Job? = null
@@ -90,7 +88,9 @@ class FaceViewModel(
             else -> {}
           }
         } finally {
-          faceInfo.close()
+          if (faceInfo !== _checkedFaceInfo) {
+            faceInfo.close()
+          }
         }
       }
     }
@@ -115,8 +115,8 @@ class FaceViewModel(
       updateState { State(stage = Stage.Finished(type = type)) }
     }
     _faceInfoChecker.reset()
-    _checkedFaceData = null
-    _checkedFaceImage = null
+    _checkedFaceInfo?.close()
+    _checkedFaceInfo = null
   }
 
   /** 准备阶段 */
@@ -126,18 +126,15 @@ class FaceViewModel(
   ) {
     if (!_faceInfoChecker.check(state, targetCount = 2)) return
 
-    val checkedFaceData = faceInfo.faceData
-    val checkedFaceImage = faceInfo.getFaceImage()
+    // 保存通过检测的数据
+    check(_checkedFaceInfo == null)
+    _checkedFaceInfo = faceInfo
 
     val listInteractionType = getInteractionTypes()
     if (listInteractionType.isEmpty()) {
-      notifySuccess(data = checkedFaceData, image = checkedFaceImage)
+      notifySuccess(data = faceInfo.faceData, image = faceInfo.getFaceImage())
       return
     }
-
-    // 保存通过检测的数据
-    _checkedFaceData = checkedFaceData
-    _checkedFaceImage = checkedFaceImage
 
     val listType = listInteractionType.shuffled()
     val firstType = listType.first()
@@ -158,8 +155,8 @@ class FaceViewModel(
     state: State,
     stage: Stage.Interacting,
   ) {
-    val checkedFaceData = _checkedFaceData
-    val checkedFaceImage = _checkedFaceImage
+    val checkedFaceData = _checkedFaceInfo?.faceData
+    val checkedFaceImage = _checkedFaceInfo?.getFaceImage()
     if (checkedFaceData == null || checkedFaceImage == null) {
       finishWithType(FinishType.InternalError)
       return
@@ -217,8 +214,8 @@ class FaceViewModel(
   }
 
   private fun notifySuccess(data: FloatArray, image: FaceImage) {
-    finishWithType(FinishType.Success)
     image.init()
+    finishWithType(FinishType.Success)
     onSuccess(FaceResult(data = data, image = image))
   }
 
