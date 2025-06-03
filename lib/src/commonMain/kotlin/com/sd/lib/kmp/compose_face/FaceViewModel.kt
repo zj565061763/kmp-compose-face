@@ -130,6 +130,7 @@ class FaceViewModel(
 
     val newFaceQuality = state.faceState.faceQuality
     if (newFaceQuality > _checkedFaceQuality) {
+      logMsg { "quality $_checkedFaceQuality -> $newFaceQuality" }
       _checkedFaceQuality = newFaceQuality
       _checkedFaceData = faceInfo.faceData
       _checkedFaceImage?.close()
