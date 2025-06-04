@@ -293,10 +293,7 @@ class FaceViewModel(
     val faceCount: Int = 0,
     val faceState: FaceState = FaceState.Empty,
     val faceBounds: FaceBounds = FaceBounds.Empty,
-  ) {
-    val isFinishedWithTimeout: Boolean get() = stage is StageFinished.Timeout
-    val isFinishedWithInternalError: Boolean get() = stage is StageFinished.InternalError
-  }
+  )
 
   sealed interface Stage
   data object StageNone : Stage

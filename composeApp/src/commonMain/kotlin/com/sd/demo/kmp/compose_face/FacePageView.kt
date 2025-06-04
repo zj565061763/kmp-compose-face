@@ -33,34 +33,12 @@ fun FacePageView(
   onClickExit: () -> Unit,
 ) {
   val state by vm.stateFlow.collectAsStateWithLifecycle()
-
-  val finishTips = when {
-    state.isFinishedWithTimeout -> "超时"
-    state.isFinishedWithInternalError -> "内部错误"
-    else -> ""
-  }
-
-  if (finishTips.isNotEmpty()) {
-    AlertDialog(
-      onDismissRequest = {},
-      text = { Text(text = finishTips) },
-      confirmButton = {
-        TextButton(onClick = { vm.restart() }) {
-          Text(text = "再试一次")
-        }
-      },
-      dismissButton = {
-        TextButton(onClick = onClickExit) {
-          Text(text = "退出")
-        }
-      },
-    )
-  }
+  val stage = state.stage
 
   val invalidType by vm.invalidTypeFlow.collectAsStateWithLifecycle(null)
   val invalidTips = faceInvalidTips(invalidType = invalidType)
 
-  val tips = when (val stage = state.stage) {
+  val tips = when (stage) {
     is FaceViewModel.StagePreparing -> invalidTips
     is FaceViewModel.StageInteracting -> invalidTips.ifEmpty {
       faceInteractingTips(
@@ -90,6 +68,29 @@ fun FacePageView(
         .background(Color.Black),
       vm = vm,
     )
+  }
+
+  when (stage) {
+    is FaceViewModel.StageFinished.Timeout -> "超时"
+    is FaceViewModel.StageFinished.InternalError -> "内部错误"
+    else -> ""
+  }.also { finishTips ->
+    if (finishTips.isNotEmpty()) {
+      AlertDialog(
+        onDismissRequest = {},
+        text = { Text(text = finishTips) },
+        confirmButton = {
+          TextButton(onClick = { vm.restart() }) {
+            Text(text = "再试一次")
+          }
+        },
+        dismissButton = {
+          TextButton(onClick = onClickExit) {
+            Text(text = "退出")
+          }
+        },
+      )
+    }
   }
 }
 
