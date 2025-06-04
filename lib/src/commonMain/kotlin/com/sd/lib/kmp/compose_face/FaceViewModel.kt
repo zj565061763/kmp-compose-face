@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 class FaceViewModel(
   private val coroutineScope: CoroutineScope,
   /** 要互动的类型列表 */
-  private val getInteractionTypes: () -> List<FaceInteractionType>,
+  private val getInteractionTypes: () -> List<FaceInteractionType> = { FaceInteractionType.entries },
   /** 最小人脸质量[0-1] */
   private val getMinFaceQuality: (Stage) -> Float = { minFaceQualityOfStage(it) },
   /** 人脸占图片的最小比例[0-1] */

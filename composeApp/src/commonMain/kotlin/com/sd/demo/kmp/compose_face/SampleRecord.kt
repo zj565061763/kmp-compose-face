@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.sd.demo.kmp.compose_face.platform.FaceImageView
 import com.sd.lib.kmp.compose_face.FaceImage
-import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceViewModel
 
 /**
@@ -33,7 +32,6 @@ fun SampleRecord(
   val vm = remember {
     FaceViewModel(
       coroutineScope = coroutineScope,
-      getInteractionTypes = { FaceInteractionType.entries },
       onSuccess = { result ->
         faceImage = result.image
         ComposeApp.faceData = result.data
