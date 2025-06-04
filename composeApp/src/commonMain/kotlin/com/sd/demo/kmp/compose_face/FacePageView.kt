@@ -72,7 +72,7 @@ fun FacePageView(
 
   when (stage) {
     is FaceViewModel.StageFinished.Timeout -> "超时"
-    is FaceViewModel.StageFinished.InternalError -> "内部错误"
+    is FaceViewModel.StageFinished.Error -> "错误:${stage.error}"
     else -> ""
   }.also { finishTips ->
     if (finishTips.isNotEmpty()) {

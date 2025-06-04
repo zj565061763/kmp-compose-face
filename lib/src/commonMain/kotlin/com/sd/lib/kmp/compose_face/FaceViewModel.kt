@@ -77,7 +77,10 @@ class FaceViewModel(
     }
 
     when (faceInfo) {
-      is ErrorFaceInfo -> {}
+      is ErrorFaceInfo -> {
+        finishStage(StageFinished.Error(faceInfo.error))
+        return
+      }
       is InvalidFaceCountFaceInfo -> updateState { it.copy(faceCount = faceInfo.faceCount) }
       is ValidFaceInfo -> {
         updateState {
@@ -175,7 +178,7 @@ class FaceViewModel(
 
     val checkedFaceData = _checkedFaceData
     if (checkedFaceData == null) {
-      finishStage(StageFinished.InternalError)
+      finishStage(StageFinished.Error(Exception("_checkedFaceData is null when StageInteracting")))
       return
     }
 
@@ -232,7 +235,7 @@ class FaceViewModel(
     val faceData = _checkedFaceData
     val faceImage = _checkedFaceImage
     if (faceData == null || faceImage == null) {
-      finishStage(StageFinished.InternalError)
+      finishStage(StageFinished.Error(Exception("_checkedFaceData or _checkedFaceImage is null when notifySuccess")))
     } else {
       val result = FaceResult(data = faceData, image = faceImage)
       finishStage(StageFinished.Success(result = result))
@@ -318,7 +321,11 @@ class FaceViewModel(
   sealed interface StageFinished : Stage {
     data object Normal : StageFinished
     data object Timeout : StageFinished
-    data object InternalError : StageFinished
+
+    data class Error(
+      val error: Throwable,
+    ) : StageFinished
+
     data class Success(
       val result: FaceResult,
     ) : StageFinished
