@@ -1,6 +1,0 @@
-framework module InspireFace {
-  umbrella header "inspireface.h"
-  export *
-
-  module * { export * }
-}

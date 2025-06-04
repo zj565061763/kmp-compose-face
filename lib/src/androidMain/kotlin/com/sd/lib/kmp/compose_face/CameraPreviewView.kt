@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.sd.lib.kmp.face.FaceManager
 
 @Composable
 internal fun CameraPreviewView(
@@ -87,8 +88,12 @@ internal fun CameraPreviewView(
         imageAnalyzerUseCase.targetRotation = rotation
       }
     }
-    rotationProvider.addListener(executor, listener)
-    onDispose { rotationProvider.removeListener(listener) }
+    val addListener = rotationProvider.addListener(executor, listener)
+    onDispose {
+      if (addListener) {
+        rotationProvider.removeListener(listener)
+      }
+    }
   }
 
   AndroidView(

@@ -2,7 +2,7 @@ package com.sd.demo.kmp.compose_face.platform
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.sd.lib.kmp.compose_face.FaceImage
+import com.sd.lib.kmp.face.FaceImage
 
 @Composable
 expect fun FaceImageView(

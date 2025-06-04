@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.sd.lib.kmp.face.FaceManager
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.AVFoundation.AVCaptureConnection
 import platform.AVFoundation.AVCaptureOutput

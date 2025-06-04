@@ -20,10 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sd.demo.kmp.compose_face.platform.FaceImageView
-import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceInteractionType
 import com.sd.lib.kmp.compose_face.FaceViewModel
-import com.sd.lib.kmp.compose_face.faceCompare
+import com.sd.lib.kmp.face.FaceImage
+import com.sd.lib.kmp.face.faceCompare
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 

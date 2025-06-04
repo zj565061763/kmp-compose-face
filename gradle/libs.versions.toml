@@ -18,13 +18,11 @@ kmp-androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.life
 kmp-androidx-navigation-compose = "org.jetbrains.androidx.navigation:navigation-compose:2.8.0-alpha10"
 kmp-kotlinx-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
 
-kmp-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-
 camera-camera2 = "androidx.camera:camera-camera2:1.4.2"
 camera-lifecycle = "androidx.camera:camera-lifecycle:1.4.2"
 camera-view = "androidx.camera:camera-view:1.4.2"
 
-inspireface-android = "com.github.HyperInspire:inspireface-android-sdk:1.2.0"
+kmp-sd-face = "io.github.zj565061763.kmp:face:1.0.0-alpha01"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

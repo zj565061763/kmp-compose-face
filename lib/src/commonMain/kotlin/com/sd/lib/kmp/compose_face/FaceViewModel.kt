@@ -1,5 +1,13 @@
 package com.sd.lib.kmp.compose_face
 
+import com.sd.lib.kmp.face.ErrorFaceInfo
+import com.sd.lib.kmp.face.FaceBounds
+import com.sd.lib.kmp.face.FaceImage
+import com.sd.lib.kmp.face.FaceInfo
+import com.sd.lib.kmp.face.FaceState
+import com.sd.lib.kmp.face.InvalidFaceCountFaceInfo
+import com.sd.lib.kmp.face.ValidFaceInfo
+import com.sd.lib.kmp.face.faceCompare
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -52,7 +60,6 @@ class FaceViewModel(
     .map { it.checkInvalidType() }
     .distinctUntilChanged()
     .mapLatest { tips ->
-      logMsg { "invalidTypeFlow $tips" }
       if (tips != null) delay(800)
       tips
     }.distinctUntilChanged()
@@ -70,7 +77,7 @@ class FaceViewModel(
     }
 
     when (faceInfo) {
-      is ErrorGetFaceInfo -> {}
+      is ErrorFaceInfo -> {}
       is InvalidFaceCountFaceInfo -> updateState { it.copy(faceCount = faceInfo.faceCount) }
       is ValidFaceInfo -> {
         updateState {
@@ -128,7 +135,6 @@ class FaceViewModel(
 
     val newFaceQuality = state.faceState.faceQuality
     if (newFaceQuality > _checkedFaceQuality) {
-      logMsg { "quality $_checkedFaceQuality -> $newFaceQuality" }
       _checkedFaceQuality = newFaceQuality
       _checkedFaceData = faceInfo.faceData
       _checkedFaceImage?.close()

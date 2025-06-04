@@ -8,6 +8,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sd.lib.kmp.face.ErrorFaceInfo
+import com.sd.lib.kmp.face.FaceInfoDetector
+import com.sd.lib.kmp.face.FaceManager
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.CoreMedia.CMSampleBufferGetImageBuffer
 import platform.CoreVideo.CVPixelBufferLockBaseAddress
@@ -45,8 +48,9 @@ actual fun FaceView(
             CVPixelBufferUnlockBaseAddress(imageBuffer, kCVPixelBufferLock_ReadOnly)
           }
         } else {
-          FaceManager.log { "CMSampleBufferGetImageBuffer returns null" }
-          vm.process(ErrorGetFaceInfo())
+          val message = "CMSampleBufferGetImageBuffer returns null"
+          FaceManager.log { message }
+          vm.process(ErrorFaceInfo.message(message))
         }
       }
     }

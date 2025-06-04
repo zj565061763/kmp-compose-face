@@ -6,8 +6,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import com.sd.lib.kmp.compose_face.FaceImage
-import com.sd.lib.kmp.compose_face.FaceImageWithBitmap
+import com.sd.lib.kmp.face.FaceImage
+import com.sd.lib.kmp.face.FaceImageWithBitmap
 
 @Composable
 actual fun FaceImageView(

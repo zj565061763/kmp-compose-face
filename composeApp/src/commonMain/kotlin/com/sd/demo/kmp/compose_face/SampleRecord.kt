@@ -18,8 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sd.demo.kmp.compose_face.platform.FaceImageView
-import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceViewModel
+import com.sd.lib.kmp.face.FaceImage
 
 /**
  * 录入
