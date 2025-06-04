@@ -61,8 +61,8 @@ fun FacePageView(
   val invalidTips = faceInvalidTips(invalidType = invalidType)
 
   val tips = when (val stage = state.stage) {
-    is FaceViewModel.Stage.Preparing -> invalidTips
-    is FaceViewModel.Stage.Interacting -> invalidTips.ifEmpty {
+    is FaceViewModel.StagePreparing -> invalidTips
+    is FaceViewModel.StageInteracting -> invalidTips.ifEmpty {
       faceInteractingTips(
         interactionType = stage.interactionType,
         interactionStage = stage.interactionStage,

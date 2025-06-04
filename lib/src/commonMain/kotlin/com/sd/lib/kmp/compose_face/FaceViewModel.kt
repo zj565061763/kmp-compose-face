@@ -28,8 +28,6 @@ class FaceViewModel(
   private val timeout: Long = 15_000,
   /** 最小验证人脸相似度[0-1] */
   private val minValidateSimilarity: Float = 0.75f,
-  /** 成功回调 */
-  private val onSuccess: (FaceResult) -> Unit,
 ) {
   private val _stateFlow = MutableStateFlow<State>(State())
   val stateFlow: StateFlow<State> = _stateFlow.asStateFlow()
@@ -62,12 +60,12 @@ class FaceViewModel(
   /** 处理脸部信息 */
   fun process(faceInfo: FaceInfo) {
     val stage = _currentState.stage
-    if (stage is Stage.Finished) {
+    if (stage is StageFinished) {
       return
     }
 
-    if (stage is Stage.None) {
-      updateState { it.copy(stage = Stage.Preparing) }
+    if (stage is StageNone) {
+      updateState { it.copy(stage = StagePreparing) }
       startStaticJob()
     }
 
@@ -85,8 +83,8 @@ class FaceViewModel(
         try {
           val state = _currentState
           when (val stage = state.stage) {
-            is Stage.Preparing -> handleStagePreparing(faceInfo = faceInfo, state = state)
-            is Stage.Interacting -> handleStageInteracting(faceInfo = faceInfo, state = state, stage = stage)
+            is StagePreparing -> handleStagePreparing(faceInfo = faceInfo, state = state)
+            is StageInteracting -> handleStageInteracting(faceInfo = faceInfo, state = state, stage = stage)
             else -> error("Illegal stage:$stage")
           }
         } finally {
@@ -98,21 +96,21 @@ class FaceViewModel(
 
   /** 结束 */
   fun finish() {
-    finishWithType(FinishType.Normal)
+    finishStage(StageFinished.Normal)
   }
 
   /** 结束后，重新开始 */
   fun restart() {
-    if (_currentState.stage is Stage.Finished) {
+    if (_currentState.stage is StageFinished) {
       updateState { State() }
     }
   }
 
-  private fun finishWithType(type: FinishType) {
+  private fun finishStage(stage: StageFinished) {
     _timeoutJob?.cancel()
     _staticJob?.cancel()
-    if (_currentState.stage !is Stage.Finished) {
-      updateState { State(stage = Stage.Finished(type = type)) }
+    if (_currentState.stage !is StageFinished) {
+      updateState { State(stage = stage) }
     }
     _checkedFaceCount = 0
     _checkedFaceQuality = 0f
@@ -152,7 +150,7 @@ class FaceViewModel(
     val firstType = listType.first()
     updateState {
       it.copy(
-        stage = Stage.Interacting(
+        stage = StageInteracting(
           listInteractionType = listType - firstType,
           interactionType = firstType,
           interactionStage = FaceInteractionStage.Interacting,
@@ -165,13 +163,13 @@ class FaceViewModel(
   private fun handleStageInteracting(
     faceInfo: ValidFaceInfo,
     state: State,
-    stage: Stage.Interacting,
+    stage: StageInteracting,
   ) {
     if (state.checkInvalidType() != null) return
 
     val checkedFaceData = _checkedFaceData
     if (checkedFaceData == null) {
-      finishWithType(FinishType.InternalError)
+      finishStage(StageFinished.InternalError)
       return
     }
 
@@ -216,7 +214,7 @@ class FaceViewModel(
     val nextType = listInteractionType.first()
     val newList = listInteractionType - nextType
     updateInteractingStage {
-      Stage.Interacting(
+      StageInteracting(
         listInteractionType = newList,
         interactionType = nextType,
         interactionStage = FaceInteractionStage.Interacting,
@@ -228,10 +226,10 @@ class FaceViewModel(
     val faceData = _checkedFaceData
     val faceImage = _checkedFaceImage
     if (faceData == null || faceImage == null) {
-      finishWithType(FinishType.InternalError)
+      finishStage(StageFinished.InternalError)
     } else {
-      finishWithType(FinishType.Success)
-      onSuccess(FaceResult(data = faceData, image = faceImage))
+      val result = FaceResult(data = faceData, image = faceImage)
+      finishStage(StageFinished.Success(result = result))
     }
   }
 
@@ -239,7 +237,7 @@ class FaceViewModel(
     _timeoutJob?.cancel()
     _timeoutJob = coroutineScope.launch {
       delay(timeout)
-      finishWithType(FinishType.Timeout)
+      finishStage(StageFinished.Timeout)
     }
   }
 
@@ -248,7 +246,7 @@ class FaceViewModel(
     _staticJob = coroutineScope.launch {
       launch {
         _stateFlow
-          .map { it.stage is Stage.Preparing }
+          .map { it.stage is StagePreparing }
           .distinctUntilChanged()
           .collect {
             if (it) {
@@ -260,7 +258,7 @@ class FaceViewModel(
         _stateFlow
           .map {
             when (val stage = it.stage) {
-              is Stage.Interacting -> stage.interactionStage
+              is StageInteracting -> stage.interactionStage
               else -> null
             }
           }
@@ -274,10 +272,10 @@ class FaceViewModel(
     }
   }
 
-  private fun updateInteractingStage(update: (Stage.Interacting) -> Stage.Interacting) {
+  private fun updateInteractingStage(update: (StageInteracting) -> StageInteracting) {
     updateState {
       val oldStage = it.stage
-      if (oldStage is Stage.Interacting) {
+      if (oldStage is StageInteracting) {
         it.copy(stage = update(oldStage))
       } else {
         it
@@ -291,44 +289,36 @@ class FaceViewModel(
   }
 
   data class State(
-    val stage: Stage = Stage.None,
+    val stage: Stage = StageNone,
     val faceCount: Int = 0,
     val faceState: FaceState = FaceState.Empty,
     val faceBounds: FaceBounds = FaceBounds.Empty,
   ) {
-    val isFinishedWithTimeout: Boolean get() = stage is Stage.Finished && stage.type == FinishType.Timeout
-    val isFinishedWithInternalError: Boolean get() = stage is Stage.Finished && stage.type == FinishType.InternalError
+    val isFinishedWithTimeout: Boolean get() = stage is StageFinished.Timeout
+    val isFinishedWithInternalError: Boolean get() = stage is StageFinished.InternalError
   }
 
-  sealed interface Stage {
-    data object None : Stage
+  sealed interface Stage
+  data object StageNone : Stage
+  data object StagePreparing : Stage
+  data class StageInteracting(
+    /** 需要互动的类型列表 */
+    val listInteractionType: List<FaceInteractionType>,
+    /** 当前互动的类型 */
+    val interactionType: FaceInteractionType,
+    /** 当前互动的阶段 */
+    val interactionStage: FaceInteractionStage,
+    /** 当前互动类型的互动次数 */
+    val interactionCount: Int = 0,
+  ) : Stage
 
-    /** 准备阶段 */
-    data object Preparing : Stage
-
-    /** 互动阶段 */
-    data class Interacting(
-      /** 需要互动的类型列表 */
-      val listInteractionType: List<FaceInteractionType>,
-      /** 当前互动的类型 */
-      val interactionType: FaceInteractionType,
-      /** 当前互动的阶段 */
-      val interactionStage: FaceInteractionStage,
-      /** 当前互动类型的互动次数 */
-      val interactionCount: Int = 0,
-    ) : Stage
-
-    /** 结束 */
-    data class Finished(
-      val type: FinishType,
-    ) : Stage
-  }
-
-  enum class FinishType {
-    Normal,
-    Success,
-    Timeout,
-    InternalError,
+  sealed interface StageFinished : Stage {
+    data object Normal : StageFinished
+    data object Timeout : StageFinished
+    data object InternalError : StageFinished
+    data class Success(
+      val result: FaceResult,
+    ) : StageFinished
   }
 
   enum class InvalidType {
@@ -350,8 +340,8 @@ class FaceViewModel(
 
   private fun State.checkInvalidType(): InvalidType? {
     return when (stage) {
-      is Stage.Preparing -> checkInvalidTypeWithParams()
-      is Stage.Interacting -> checkInvalidTypeWithParams(checkFaceInteraction = false)
+      is StagePreparing -> checkInvalidTypeWithParams()
+      is StageInteracting -> checkInvalidTypeWithParams(checkFaceInteraction = false)
       else -> null
     }
   }
@@ -379,14 +369,14 @@ class FaceViewModel(
 
   companion object {
     private fun minFaceQualityOfStage(stage: Stage): Float {
-      if (stage is Stage.Interacting
+      if (stage is StageInteracting
         && stage.interactionStage == FaceInteractionStage.Interacting
       ) return 0.5f
       return 0.7f
     }
 
     private fun minFaceScaleOfStage(stage: Stage): Float {
-      if (stage is Stage.Interacting
+      if (stage is StageInteracting
         && stage.interactionStage == FaceInteractionStage.Interacting
         && stage.interactionType == FaceInteractionType.RaiseHead
       ) return 0.4f

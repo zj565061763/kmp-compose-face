@@ -10,6 +10,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -17,6 +18,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sd.demo.kmp.compose_face.platform.FaceImageView
 import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceInteractionType
@@ -42,21 +44,28 @@ fun SampleValidate(
     FaceViewModel(
       coroutineScope = coroutineScope,
       getInteractionTypes = { listOf(FaceInteractionType.entries.random()) },
-      onSuccess = { result ->
-        faceImage = result.image
-
-        val savedFace = ComposeApp.faceData
-        val resultFace = result.data
-        val similarity = faceCompare(savedFace, resultFace)
-        logMsg { "similarity:${similarity}" }
-
-        showSnackbarJob?.cancel()
-        showSnackbarJob = coroutineScope.launch {
-          val text = if (similarity > 0.8f) "验证成功" else "验证失败"
-          snackbarHostState.showSnackbar(text)
-        }
-      },
     )
+  }
+
+  val state by vm.stateFlow.collectAsStateWithLifecycle()
+
+  val stage = state.stage
+  if (stage is FaceViewModel.StageFinished.Success) {
+    LaunchedEffect(Unit) {
+      val result = stage.result
+      faceImage = result.image
+
+      val savedFace = ComposeApp.faceData
+      val resultFace = result.data
+      val similarity = faceCompare(savedFace, resultFace)
+      logMsg { "similarity:${similarity}" }
+
+      showSnackbarJob?.cancel()
+      showSnackbarJob = coroutineScope.launch {
+        val text = if (similarity > 0.8f) "验证成功" else "验证失败"
+        snackbarHostState.showSnackbar(text)
+      }
+    }
   }
 
   DisposableEffect(vm) {

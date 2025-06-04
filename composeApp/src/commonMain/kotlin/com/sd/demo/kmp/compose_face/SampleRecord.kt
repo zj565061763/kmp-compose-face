@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sd.demo.kmp.compose_face.platform.FaceImageView
 import com.sd.lib.kmp.compose_face.FaceImage
 import com.sd.lib.kmp.compose_face.FaceViewModel
@@ -29,15 +31,17 @@ fun SampleRecord(
   val coroutineScope = rememberCoroutineScope()
   var faceImage by remember { mutableStateOf<FaceImage?>(null) }
 
-  val vm = remember {
-    FaceViewModel(
-      coroutineScope = coroutineScope,
-      onSuccess = { result ->
-        faceImage = result.image
-        ComposeApp.faceData = result.data
-        logMsg { "onSuccess size:${result.data} data:${result.data.joinToString()}" }
-      },
-    )
+  val vm = remember { FaceViewModel(coroutineScope = coroutineScope) }
+  val state by vm.stateFlow.collectAsStateWithLifecycle()
+
+  val stage = state.stage
+  if (stage is FaceViewModel.StageFinished.Success) {
+    LaunchedEffect(Unit) {
+      val result = stage.result
+      faceImage = result.image
+      ComposeApp.faceData = result.data
+      logMsg { "onSuccess size:${result.data} data:${result.data.joinToString()}" }
+    }
   }
 
   DisposableEffect(vm) {

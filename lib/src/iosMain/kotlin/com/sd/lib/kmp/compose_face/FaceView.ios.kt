@@ -31,7 +31,7 @@ actual fun FaceView(
     modifier = modifier,
     contentAlignment = Alignment.Center,
   ) {
-    if (state.stage !is FaceViewModel.Stage.Finished) {
+    if (state.stage !is FaceViewModel.StageFinished) {
       CameraPreviewView(modifier = Modifier.matchParentSize()) {
         val imageBuffer = CMSampleBufferGetImageBuffer(it)
         if (imageBuffer != null) {
