@@ -382,7 +382,7 @@ class FaceViewModel(
       if (stage is StageInteracting
         && stage.interactionStage == FaceInteractionStage.Interacting
       ) return 0.5f
-      return 0.7f
+      return 0.8f
     }
 
     private fun minFaceScaleOfStage(stage: Stage): Float {
